@@ -58,7 +58,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md). To report a security problem, follow [S
 
 MIT. See [LICENSE](LICENSE).
 
-[^1]: Music Business Worldwide, "Apple Music launches AI transparency tags, but only if labels and distributors declare them". <https://www.musicbusinessworldwide.com/apple-music-launches-ai-transparency-tags/>
+[^1]: MacRumors, "Apple Music Rolling Out Disclosure Tags for AI-Made Songs", 5 March 2026. <https://www.macrumors.com/2026/03/05/apple-music-ai-transparency-tags/>
 [^2]: CennoxX, "spotify-ai-blocker" (community list of AI artists). <https://github.com/CennoxX/spotify-ai-blocker>
 [^3]: Apple Support, "Safely open apps on your Mac". <https://support.apple.com/en-us/102445>
 [^4]: Apple, Mac User Guide, "Open a Mac app from an unknown developer". <https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac>
