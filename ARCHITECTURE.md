@@ -8,7 +8,7 @@ Status: pre-alpha. This is the planned design. Update this file when an invarian
 
 The Music app posts a distributed notification, `com.apple.Music.playerInfo`, whenever the track changes. The app turns it into a `TrackInfo`. It normalises the artist and splits collaborations into parts. Then it checks each part against the subscribed AI-artist lists and the user's own decisions.
 
-On a match, the app runs the configured action through Apple Events. The default action is to dislike the track, then skip it. The app records a row in its history and posts a notification with a **Not AI** button. That button undoes the action and allows the artist from then on.
+On a match, the app runs the configured action through Apple Events. The default action is to skip the track. Before the skip, the app tries to dislike the track and reads the result back. On macOS 27, Music ignores this for streamed songs, so the history records whether it stuck. The app records a row in its history and posts a notification with a **Not AI** button. That button undoes the action and allows the artist from then on.
 
 ```text
 Music.app --playerInfo--> MusicObserverAdapter --TrackInfo--> MatchCoordinator
@@ -26,17 +26,17 @@ SourceRefresher --HTTP + ETag--> [TransformRunner] --> SourceParser --> Store (l
 
 All logic lives here. It has no UI code.
 
-- `ArtistNormalizer`: case-folds, strips diacritics and collapses whitespace. Splits an artist string on `&`, `,`, `x`, `feat.` and `ft.`, and reads `(feat. X)` from the title.
+- `ArtistNormalizer`: case-folds, strips diacritics, keeps dots and collapses whitespace. Splits an artist string on `&`, `,`, `x`, `feat.` and `ft.`, and reads `(feat. X)` from the title.
 - `Verdict`: a pure function. It takes the artist parts, the listed names and the decisions, and returns match or ignore.
-- `TrackInfo`: parses the `playerInfo` dictionary and builds the track key. The key is the persistent ID, or `Name + Artist + Album` when that ID is missing.
-- `MatchCoordinator`: the core flow. It handles the delay before acting, the track-key check, history rows, the daily notification cap, and the **Not AI** undo.
+- `TrackInfo`: parses the `playerInfo` dictionary and builds the track key from the normalised `Name`, `Artist` and `Album`. Streamed songs carry no persistent ID. A notification without `Name` only updates the player state.
+- `MatchCoordinator`: the core flow. It handles the delay before acting, the track-key check and the dislike attempt. It also writes history rows, applies the daily notification cap and runs the **Not AI** undo. Undo sends `previous track`, waits up to 1 second for the skipped song, and sends it once more if needed. The first call may only restart the current song.
 - `SourceParser`: turns a `csv` (with a named column) or `lines` body into names.
 - `TransformRunner`: runs an optional local command. The downloaded body goes in on stdin, and names come out on stdout.
 - `SourceRefresher`: downloads each subscribed list with `If-None-Match`. It replaces that list's rows in one transaction.
 - `Store`: the GRDB database, its migrations and all queries.
 - `Archiver`: moves history rows beyond the newest N into the archive database.
 - `MenuState`: the view model. Views only render it.
-- Ports: `MusicControlling`, `Notifying` and `Clock`. These protocols are the only way the package reaches the system.
+- Ports: `MusicControlling`, `Notifying` and `Clock`. These protocols are the only way the package reaches the system. `MusicControlling.dislikeCurrentTrack()` returns `.accepted`, `.ignored` or `.failed`, so a better dislike method later changes only the adapter.
 
 ### `App/` (Xcode project)
 
@@ -65,7 +65,7 @@ MUST and MUST NOT have the meaning given in BCP 14 (RFC 2119 and RFC 8174).[^3][
 4. The app MUST NOT launch Music.app. Every Apple Event is sent only while Music.app is running.
 5. Track data MUST come from the `playerInfo` notification. The app MUST NOT read the current track with Apple Events. On some macOS versions, that fails for tracks outside the library.[^5]
 6. An action MUST run only if the matched track key equals the key of the latest `playerInfo`. This check MUST NOT use Apple Events.
-7. A dislike MUST run before `next track`. Otherwise it lands on the wrong track.
+7. A dislike attempt MUST run before `next track`. Otherwise it lands on the wrong track. The app MUST NOT report a dislike unless the read-back returns `true`.
 8. Downloaded list data MUST reach a transform command only on stdin. It MUST NOT become part of a command string or argument.
 9. A failed refresh, transform or archive MUST NOT delete existing data.
 10. Code outside `Store` MUST NOT touch the database. Code outside `SourceRefresher` MUST NOT touch the network. Code outside `TransformRunner` MUST NOT start processes.
@@ -109,13 +109,13 @@ Releases are signed with one self-signed certificate. A stable signature lets ma
 
 ### Platform risk
 
-The `playerInfo` keys are undocumented. `TrackInfo` is the only place that reads them. Dislike through AppleScript may fail for tracks outside the library on some macOS versions.[^5] The fallback is still open: UI scripting "Suggest Less", or skip only.
+The `playerInfo` keys are undocumented. `TrackInfo` is the only place that reads them. On macOS 27.0.1, Music ignores AppleScript dislikes for streamed songs.[^5] "Suggest Less" exists only in window controls that the accessibility API cannot reach reliably. ROADMAP.md has the spike details. The app therefore skips without relying on the dislike.
 
 [^1]: Aleksey Kladov, "ARCHITECTURE.md", 6 February 2021. <https://matklad.github.io/2021/02/06/ARCHITECTURE.md.html>
 [^2]: Apple Developer Documentation, `SMAppService.mainApp` (macOS 13.0+). <https://developer.apple.com/documentation/servicemanagement/smappservice/mainapp>
 [^3]: RFC 2119, "Key words for use in RFCs to Indicate Requirement Levels". <https://www.rfc-editor.org/rfc/rfc2119>
 [^4]: RFC 8174, "Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words". <https://www.rfc-editor.org/rfc/rfc8174>
-[^5]: plmcgrn, "Setting favorite/suggest less keyboard shortcuts in Apple Music for Mac" (notes on macOS Tahoe). <https://gist.github.com/plmcgrn/5d908e576821b3e0a9e5d0c707316087>
+[^5]: plmcgrn, "Setting favorite/suggest less keyboard shortcuts in Apple Music for Mac" (notes on macOS Tahoe). <https://gist.github.com/plmcgrn/5d908e576821b3e0a9e5d0c707316087> The project's own test on macOS 27.0.1 is in [ROADMAP.md](ROADMAP.md#spike-results-macos-2701).
 [^6]: Apple Developer Documentation, `NSAppleEventsUsageDescription`. <https://developer.apple.com/documentation/bundleresources/information-property-list/nsappleeventsusagedescription>
 [^7]: Apple Developer Documentation, `com.apple.security.automation.apple-events`. <https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.security.automation.apple-events>
 [^8]: Barkeep, "Why macOS permissions vanish every time you rebuild your app". <https://barkeepmac.com/macos-permissions-lost-after-rebuild.html>

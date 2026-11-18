@@ -25,10 +25,36 @@ Local builds signed with your own team look like a different app to macOS. Each 
 
 ## Workflow
 
-1. Create a branch from `main`.
-2. Make one logical change.
+The app grows in small increments. [ROADMAP.md](ROADMAP.md) lists them in order.
+
+- Each increment is 1 issue with the `increment` label, 1 pull request and 1 release.
+- Each increment keeps `main` green. It compiles, keeps package line coverage at 100% and produces a signed build that installs and runs. The build does what the CHANGELOG says, even if that is little.
+- Increments that change only docs ship no build.
+- Exactly 1 increment issue is open at a time.
+
+### Start here
+
+Read these 3 things before you change anything:
+
+1. [CHANGELOG.md](CHANGELOG.md): what users already have.
+2. [ROADMAP.md](ROADMAP.md): what comes next, and the product decisions.
+3. The open increment issue: `gh issue list --label increment --state open`, or the Issues tab filtered by `increment`. Build what it describes.
+
+### Work on an increment
+
+1. Create a branch from `main`, for example `inc/v0.2.0-skip`.
+2. Make the changes the issue describes, and nothing more.
 3. Run the checks in "Definition of done".
-4. Open a pull request and fill in the template.
+4. Open a pull request, fill in the template and add `Closes #<issue number>`.
+
+### Close an increment
+
+1. Merge the pull request.
+2. The maintainer publishes the release (see "Releases").
+3. Mark the row as Done in ROADMAP.md.
+4. Plan the next increment and open its issue with the **Increment** form. Plan it now, with the newest code in hand. This keeps 1 open increment issue.
+
+Bugs and feature requests from the other forms go into ROADMAP.md when they are accepted. A bug that blocks users can become the next increment.
 
 ### Commit messages
 

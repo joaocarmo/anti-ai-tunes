@@ -6,6 +6,16 @@ Status: pre-alpha. Only documentation exists. The layout and commands below desc
 
 This file follows the AGENTS.md convention.[^1] Claude Code reads it directly, so the repo has no `CLAUDE.md`.[^2]
 
+## Start here
+
+Work happens in small increments: 1 issue, 1 PR and 1 release each. Before you change anything:
+
+1. Read [CHANGELOG.md](CHANGELOG.md): what is already done.
+2. Read [ROADMAP.md](ROADMAP.md): what comes next, and the product decisions.
+3. Run `gh issue list --label increment --state open` and read that issue. Build only what it describes.
+
+When the increment closes, plan the next one and open its issue. [CONTRIBUTING.md](CONTRIBUTING.md) › Workflow has the full rules.
+
 ## Read first
 
 1. [ARCHITECTURE.md](ARCHITECTURE.md): design, invariants and boundaries. Its MUST rules are binding.
@@ -41,7 +51,7 @@ The coverage gate is in `.github/workflows/ci.yml`. Run the same steps locally b
 - [ ] Never launch Music.app. Check that it is running before any Apple Event.
 - [ ] Read track data only from the `com.apple.Music.playerInfo` notification. Never read it with Apple Events.
 - [ ] Act on a track only while its key matches the latest `playerInfo`.
-- [ ] Dislike before `next track`.
+- [ ] Attempt the dislike before `next track`. Never claim a dislike unless the read-back says `true`.
 - [ ] Downloaded list data reaches a transform command only on stdin. It never becomes part of a shell command.
 - [ ] All database access goes through `Store`.
 - [ ] All time goes through `Clock`. Tests never sleep.

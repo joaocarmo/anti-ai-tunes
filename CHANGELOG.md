@@ -9,6 +9,7 @@ The format is based on Keep a Changelog 1.1.0.[^1] This project follows Semantic
 ### Added
 
 - Project documentation, community files and issue and pull request templates.
+- A roadmap and an increment-based workflow for contributors.
 
 [unreleased]: https://github.com/joaocarmo/anti-ai-tunes/commits/main
 
