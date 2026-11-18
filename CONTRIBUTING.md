@@ -2,7 +2,7 @@
 
 Thank you for helping. This guide is for people and for AI coding agents. Agents should read [AGENTS.md](AGENTS.md) first.
 
-Status: pre-alpha. Some steps below describe tooling that does not exist yet.
+Status: v0.1.0 in progress.
 
 ## Before you start
 
@@ -13,15 +13,18 @@ Status: pre-alpha. Some steps below describe tooling that does not exist yet.
 
 ## Set up
 
-You need a Mac with macOS 14 or later and Xcode 16 or later. Xcode 16 includes `swift format`, so you need no extra tools.[^1]
+You need a Mac with macOS 14 or later and Xcode 16 or later. Xcode 16 includes `swift format`, so you need no extra tools.[^1] There is no Xcode project. Open `Package.swift` in Xcode to edit and debug.
 
 ```sh
 git clone https://github.com/joaocarmo/anti-ai-tunes.git
 cd anti-ai-tunes
 swift test
+scripts/run.sh    # build, sign and open the app
 ```
 
-Local builds signed with your own team look like a different app to macOS. Each one asks for permissions again. That is expected.
+`scripts/run.sh` signs with the "Anti-AI Tunes" certificate when your keychain has it (see "One-time signing setup"). Then macOS keeps the app's permissions across rebuilds. Without it, the script signs ad hoc, and macOS asks again after each rebuild.
+
+The core package also builds and tests on Linux. The app needs macOS.
 
 ## Workflow
 
@@ -72,9 +75,10 @@ Common types are `feat`, `fix`, `docs`, `test`, `refactor`, `ci` and `chore`. Ma
 
 A change is done when all of these pass:
 
-- [ ] `swift format lint --strict -r Sources Tests App`
+- [ ] `swift format lint --strict -r Sources Tests App Package.swift`
 - [ ] `swift test --enable-code-coverage`, with package line coverage at 100%
-- [ ] The app target builds with `xcodebuild`
+- [ ] `scripts/coverage.sh` passes
+- [ ] The app builds with `scripts/bundle.sh`
 - [ ] Every new branch of logic has a test
 - [ ] `CHANGELOG.md` has an `Unreleased` entry for user-visible changes[^3]
 - [ ] `ARCHITECTURE.md` is updated if an invariant or a boundary changed
@@ -119,10 +123,11 @@ The project uses Semantic Versioning 2.0.0.[^9]
 Releases are signed with one self-signed certificate, so macOS keeps user permissions across updates.
 
 1. On a Mac, open Keychain Access › Certificate Assistant › Create a Certificate.
-2. Set the type to **Code Signing** and the validity to 10 years.
-3. Export the certificate and its key as a `.p12` file with a password.
-4. Add 2 repository secrets: `SIGNING_CERT_P12_BASE64` (the output of `base64 -i cert.p12`) and `SIGNING_CERT_PASSWORD`.
-5. Delete the exported `.p12` file. Never commit it.
+2. Name it exactly **Anti-AI Tunes**. The release workflow and `scripts/run.sh` look for this name.
+3. Set the type to **Code Signing**. Tick **Let me override defaults** and set the validity to 3650 days (10 years).
+4. Export the certificate and its key as a `.p12` file with a password.
+5. Add 2 repository secrets: `SIGNING_CERT_P12_BASE64` (the output of `base64 -i cert.p12`) and `SIGNING_CERT_PASSWORD`.
+6. Delete the exported `.p12` file. Never commit it. The certificate stays in your keychain for local builds.
 
 [^1]: swiftlang, "swift-format", section "Included in the Swift Toolchain". <https://github.com/swiftlang/swift-format>
 [^2]: Conventional Commits 1.0.0. <https://www.conventionalcommits.org/en/v1.0.0/>

@@ -13,9 +13,9 @@ Closes #
 
 ## Checklist
 
-- [ ] `swift format lint --strict -r Sources Tests App` passes
+- [ ] `swift format lint --strict -r Sources Tests App Package.swift` passes
 - [ ] `swift test --enable-code-coverage` passes, with package line coverage at 100%
-- [ ] The app target builds
+- [ ] `scripts/coverage.sh` and `scripts/bundle.sh` pass
 - [ ] `CHANGELOG.md` has an `Unreleased` entry (if users see the change)
 - [ ] `ARCHITECTURE.md` is updated (if an invariant or boundary changed)
 - [ ] `ROADMAP.md` marks the increment as Done (for an increment PR)

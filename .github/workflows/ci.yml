@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions: {}
+
+jobs:
+  test:
+    runs-on: macos-26
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Show toolchain
+        run: swift --version
+
+      - name: Check formatting
+        run: swift format lint --strict -r Sources Tests App Package.swift
+
+      - name: Run tests
+        run: swift test --enable-code-coverage
+
+      - name: Check coverage
+        run: scripts/coverage.sh
+
+      - name: Build the app
+        run: scripts/bundle.sh

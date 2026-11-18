@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions: {}
+
+jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
+  build:
+    needs: test
+    runs-on: macos-26
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ github.event.release.tag_name }}
+      KEYCHAIN: ${{ runner.temp }}/signing.keychain-db
+      SIGN_IDENTITY: Anti-AI Tunes
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Import the signing certificate
+        env:
+          P12_BASE64: ${{ secrets.SIGNING_CERT_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.SIGNING_CERT_PASSWORD }}
+        run: |
+          keychain_password=$(uuidgen)
+          echo "$P12_BASE64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security create-keychain -p "$keychain_password" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$keychain_password" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" -P "$P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$keychain_password" "$KEYCHAIN"
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          rm "$RUNNER_TEMP/cert.p12"
+
+      - name: Build and sign a universal app
+        run: |
+          # CFBundleShortVersionString must be numeric, so v0.1.0-rc1 builds as 0.1.0.
+          version=${TAG#v}
+          version=${version%%-*}
+          ARCHS="arm64 x86_64" scripts/bundle.sh "$version" "$GITHUB_RUN_NUMBER"
+
+      - name: Check the signature
+        run: |
+          codesign --verify --deep --strict .build/AntiAITunes.app
+          codesign -d -r- .build/AntiAITunes.app 2>&1 | tee requirement.txt
+          # A certificate-based requirement keeps user permissions across updates; ad hoc would show a cdhash.
+          grep -q 'certificate leaf = H"' requirement.txt
+
+      - name: Upload to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          zip="AntiAITunes-$TAG.zip"
+          ditto -c -k --keepParent .build/AntiAITunes.app "$zip"
+          shasum -a 256 "$zip" > "$zip.sha256"
+          gh release upload "$TAG" "$zip" "$zip.sha256" --clobber --repo "$GITHUB_REPOSITORY"
+          gh release view "$TAG" --json body --jq .body --repo "$GITHUB_REPOSITORY" > notes.md
+          printf '\n\n' >> notes.md
+          cat .github/release-install-note.md >> notes.md
+          gh release edit "$TAG" --notes-file notes.md --repo "$GITHUB_REPOSITORY"
+
+      - name: Delete the keychain
+        if: always()
+        run: security delete-keychain "$KEYCHAIN" || true

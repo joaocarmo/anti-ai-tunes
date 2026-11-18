@@ -40,7 +40,7 @@ body:
     attributes:
       label: Definition of done
       value: |
-        - [ ] `swift format lint --strict -r Sources Tests App` passes
+        - [ ] `swift format lint --strict -r Sources Tests App Package.swift` passes
         - [ ] `swift test --enable-code-coverage` passes, with package line coverage at 100%
         - [ ] The app builds and the release workflow produces a signed build
         - [ ] `CHANGELOG.md` has the entry below under `Unreleased`

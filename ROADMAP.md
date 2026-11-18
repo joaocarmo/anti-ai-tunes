@@ -15,8 +15,8 @@ This file lists what comes next and in which order. It also records the product 
 | 0 | n/a | Repository bootstrap: docs and community files | Done |
 | 1 | n/a | Spike on macOS 27.0.1 (see "Spike results") | Done |
 | 2 | n/a | Working model docs, this roadmap, the increment issue form | Done |
-| 3 | v0.1.0 | Walking skeleton: menu-bar app that shows the current artist and title. CI with the coverage gate. Signed releases. | Next |
-| 4 | v0.2.0 | Skip AI artists from the default list. "Skipped X (AI)" notification. | Planned |
+| 3 | v0.1.0 | Walking skeleton: menu-bar app that shows the current artist and title. CI with the coverage gate. Signed releases. | Done |
+| 4 | v0.2.0 | Skip AI artists from the default list. "Skipped X (AI)" notification. | Next |
 | 5 | v0.3.0 | **Not AI** button: allow the artist and go back to the skipped song. | Planned |
 | 6 | v0.4.0 | History of played songs. Best-effort dislike, with the result recorded. "Couldn't detect the artist" notification. Daily notification cap. | Planned |
 | 7 | v0.5.0 | Settings: action on match, delay, pause, launch at login, notification-style warning. | Planned |
@@ -33,7 +33,7 @@ Increment 3 needs the signing certificate and 2 repository secrets first. See "O
 | Topic | Decision |
 |---|---|
 | Platform | Swift menu-bar app, unsandboxed, macOS 14 or later. No paid services, accounts or APIs. |
-| Track detection | The `com.apple.Music.playerInfo` distributed notification. No polling and no Apple Events for reading. |
+| Track detection | The `com.apple.Music.playerInfo` distributed notification. No polling. One best-effort Apple Events read of the current song at launch, because Music announces only changes. |
 | Track key | Normalised `Name + Artist + Album`. A notification without `Name` only updates the player state. Repeated notifications for the same key count once. |
 | Matching | Case-fold, strip diacritics, keep dots, trim and collapse spaces. Split the artist on `, `, ` & `, ` x `, ` feat. ` and ` ft. `. Also read `(feat. X)` from the title. Match the whole string or any part. |
 | Verdict | An `allow` decision excludes that part. A `skip` decision or a listed name triggers the action. |

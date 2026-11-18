@@ -2,7 +2,7 @@
 
 This file describes how Anti-AI Tunes is built and the rules the code must follow. It follows the ARCHITECTURE.md format: a short map of the code plus the rules that rarely change.[^1] Find code with symbol search. This file names types but does not link to them, because links go stale.
 
-Status: pre-alpha. This is the planned design. Update this file when an invariant or a boundary changes.
+Status: v0.1.0 in progress. Types marked *(planned)* do not exist yet. The rest is in the code. Update this file when an invariant or a boundary changes.
 
 ## Bird's-eye view
 
@@ -26,26 +26,28 @@ SourceRefresher --HTTP + ETag--> [TransformRunner] --> SourceParser --> Store (l
 
 All logic lives here. It has no UI code.
 
-- `ArtistNormalizer`: case-folds, strips diacritics, keeps dots and collapses whitespace. Splits an artist string on `&`, `,`, `x`, `feat.` and `ft.`, and reads `(feat. X)` from the title.
-- `Verdict`: a pure function. It takes the artist parts, the listed names and the decisions, and returns match or ignore.
-- `TrackInfo`: parses the `playerInfo` dictionary and builds the track key from the normalised `Name`, `Artist` and `Album`. Streamed songs carry no persistent ID. A notification without `Name` only updates the player state.
-- `MatchCoordinator`: the core flow. It handles the delay before acting, the track-key check and the dislike attempt. It also writes history rows, applies the daily notification cap and runs the **Not AI** undo. Undo sends `previous track`, waits up to 1 second for the skipped song, and sends it once more if needed. The first call may only restart the current song.
-- `SourceParser`: turns a `csv` (with a named column) or `lines` body into names.
-- `TransformRunner`: runs an optional local command. The downloaded body goes in on stdin, and names come out on stdout.
-- `SourceRefresher`: downloads each subscribed list with `If-None-Match`. It replaces that list's rows in one transaction.
-- `Store`: the GRDB database, its migrations and all queries.
-- `Archiver`: moves history rows beyond the newest N into the archive database.
+- `Normalizer`: case-folds, strips diacritics, trims and collapses whitespace. Keeps dots.
+- `ArtistNormalizer` *(planned)*: case-folds, strips diacritics, keeps dots and collapses whitespace. Splits an artist string on `&`, `,`, `x`, `feat.` and `ft.`, and reads `(feat. X)` from the title.
+- `Verdict` *(planned)*: a pure function. It takes the artist parts, the listed names and the decisions, and returns match or ignore.
+- `PlayerEvent` and `Track`: parse the `playerInfo` dictionary and the launch read. A message without `Name` is a state-only event. `Track.key` joins the normalised `Name`, `Artist` and `Album`, because streamed songs carry no persistent ID.
+- `NowPlaying`: applies events to the current state and reports when a different song starts, so repeats count once.
+- `MatchCoordinator` *(planned)*: the core flow. It handles the delay before acting, the track-key check and the dislike attempt. It also writes history rows, applies the daily notification cap and runs the **Not AI** undo. Undo sends `previous track`, waits up to 1 second for the skipped song, and sends it once more if needed. The first call may only restart the current song.
+- `SourceParser` *(planned)*: turns a `csv` (with a named column) or `lines` body into names.
+- `TransformRunner` *(planned)*: runs an optional local command. The downloaded body goes in on stdin, and names come out on stdout.
+- `SourceRefresher` *(planned)*: downloads each subscribed list with `If-None-Match`. It replaces that list's rows in one transaction.
+- `Store` *(planned)*: the GRDB database, its migrations and all queries.
+- `Archiver` *(planned)*: moves history rows beyond the newest N into the archive database.
 - `MenuState`: the view model. Views only render it.
-- Ports: `MusicControlling`, `Notifying` and `Clock`. These protocols are the only way the package reaches the system. `MusicControlling.dislikeCurrentTrack()` returns `.accepted`, `.ignored` or `.failed`, so a better dislike method later changes only the adapter.
+- Ports *(planned)*: `MusicControlling`, `Notifying` and `Clock`. These protocols are the only way the package reaches the system. `MusicControlling.dislikeCurrentTrack()` returns `.accepted`, `.ignored` or `.failed`, so a better dislike method later changes only the adapter.
 
-### `App/` (Xcode project)
+### `App/` (SwiftPM executable target `AntiAITunes`)
 
-Thin adapters and views. The folder is excluded from coverage as a whole.
+Thin adapters and views. The folder is excluded from coverage as a whole. `Package.swift` adds this target only on macOS, so the core package also builds and tests on Linux. There is no Xcode project: `scripts/bundle.sh` assembles and signs `AntiAITunes.app` from the binary, `Support/Info.plist` and `Support/AntiAITunes.entitlements`.
 
-- `AntiAITunesApp`: the `MenuBarExtra` and the Settings scene. Wires the adapters into the package.
+- `AntiAITunesApp`: the `MenuBarExtra` and, later, the Settings scene. `AppModel` wires the adapters into the package.
 - `MusicObserverAdapter`: subscribes to `com.apple.Music.playerInfo` through `DistributedNotificationCenter`.
-- `MusicControllerAdapter`: implements `MusicControlling` with pre-compiled `NSAppleScript`.
-- `NotifierAdapter`: implements `Notifying` with `UNUserNotificationCenter`.
+- `MusicControllerAdapter`: sends Apple Events with pre-compiled `NSAppleScript`. Today it only reads the current song at launch. Later it implements `MusicControlling`.
+- `NotifierAdapter` *(planned)*: implements `Notifying` with `UNUserNotificationCenter`.
 - Views: menu, settings, sources and decisions. The launch-at-login toggle binds `SMAppService.mainApp` directly.[^2]
 
 ### Data
@@ -63,7 +65,7 @@ MUST and MUST NOT have the meaning given in BCP 14 (RFC 2119 and RFC 8174).[^3][
 2. Code in `App/` MUST NOT contain logic. A branch that does more than forward a nil belongs in the package, with a test.
 3. Package line coverage MUST be 100%, with no exclusions inside the package.
 4. The app MUST NOT launch Music.app. Every Apple Event is sent only while Music.app is running.
-5. Track data MUST come from the `playerInfo` notification. The app MUST NOT read the current track with Apple Events. On some macOS versions, that fails for tracks outside the library.[^5]
+5. Song changes MUST come from the `playerInfo` notification. The app MUST NOT poll Music with Apple Events. One best-effort read of the current song at launch is allowed, because Music announces only changes. That read can fail for songs outside the library on some macOS versions.[^5]
 6. An action MUST run only if the matched track key equals the key of the latest `playerInfo`. This check MUST NOT use Apple Events.
 7. A dislike attempt MUST run before `next track`. Otherwise it lands on the wrong track. The app MUST NOT report a dislike unless the read-back returns `true`.
 8. Downloaded list data MUST reach a transform command only on stdin. It MUST NOT become part of a command string or argument.
