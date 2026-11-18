@@ -1,6 +1,6 @@
 # Anti-AI Tunes
 
-Anti-AI Tunes is a small menu-bar app for the Mac. It watches what plays in the Music app. If the artist is on a list of AI-generated artists, it skips the song. It also tells Apple Music to suggest less like it.
+Anti-AI Tunes is a small menu-bar app for the Mac. It watches what plays in the Music app. If the artist is on a list of AI-generated artists, it skips the song. It also asks Apple Music to suggest less like it, where macOS allows this.
 
 > **Status: pre-alpha.** The app is not built yet. This README describes the planned app. There are no releases yet.
 
@@ -30,7 +30,7 @@ To update, replace the app. Your permissions stay, because every release is sign
 
 - The Music app announces every new song. Anti-AI Tunes reads the artist from that announcement.
 - It checks the artist against the lists you subscribe to. Lists update once a day.
-- On a match, it skips the song and marks it as "Suggest Less". You can change this in Settings.
+- On a match, it skips the song. It also tries to mark the song as "Suggest Less". You can change the action in Settings.
 - A notification tells you what happened. Click **Not AI** to undo it and allow the artist from then on.
 
 ## Privacy
@@ -47,7 +47,7 @@ sqlite3 ~/Library/Application\ Support/AntiAITunes/db.sqlite \
 ## Known limits
 
 - The app matches artist names. A real artist with the same name as an AI artist gets skipped too. Click **Not AI** once to fix this.
-- On some macOS versions, the Music app refuses "Suggest Less" from other apps for songs outside your library.[^6] The app still skips those songs.
+- On macOS 27, the Music app ignores "Suggest Less" from other apps for songs outside your library.[^6] The app still skips these songs. Its history shows whether the mark stuck.
 - Apple Music lets you mark songs and albums, not artists.[^7] The app marks one song at a time.
 
 ## Contributing
@@ -63,5 +63,5 @@ MIT. See [LICENSE](LICENSE).
 [^3]: Apple Support, "Safely open apps on your Mac". <https://support.apple.com/en-us/102445>
 [^4]: Apple, Mac User Guide, "Open a Mac app from an unknown developer". <https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac>
 [^5]: Apple Developer News, "Updates to runtime protection in macOS Sequoia", 6 August 2024. <https://developer.apple.com/news/?id=saqachfa>
-[^6]: plmcgrn, "Setting favorite/suggest less keyboard shortcuts in Apple Music for Mac" (notes on macOS Tahoe). <https://gist.github.com/plmcgrn/5d908e576821b3e0a9e5d0c707316087>
+[^6]: plmcgrn, "Setting favorite/suggest less keyboard shortcuts in Apple Music for Mac" (notes on macOS Tahoe). <https://gist.github.com/plmcgrn/5d908e576821b3e0a9e5d0c707316087> The project's own test on macOS 27.0.1 is in [ROADMAP.md](ROADMAP.md#spike-results-macos-2701).
 [^7]: Apple, Music User Guide for Mac, "Rate and personalize music on Mac". <https://support.apple.com/guide/music/rate-and-personalize-music-musf7da17c25/mac>

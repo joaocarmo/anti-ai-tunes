@@ -1,0 +1,55 @@
+# Issue form syntax: https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-issue-forms
+name: Increment
+description: The next planned increment from ROADMAP.md. Maintainers only.
+title: "[vX.Y.Z]: "
+labels: ["increment"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Keep exactly 1 open increment issue. Create it when the previous increment closes. See CONTRIBUTING.md › Workflow.
+  - type: input
+    id: roadmap
+    attributes:
+      label: ROADMAP line
+      description: The row number and goal from ROADMAP.md.
+      placeholder: "3: v0.1.0 Walking skeleton"
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What a user can do after this release. One or two sentences.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Types, files and behaviour this increment adds or changes.
+    validations:
+      required: true
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: Related work that waits for a later increment.
+  - type: textarea
+    id: done
+    attributes:
+      label: Definition of done
+      value: |
+        - [ ] `swift format lint --strict -r Sources Tests App` passes
+        - [ ] `swift test --enable-code-coverage` passes, with package line coverage at 100%
+        - [ ] The app builds and the release workflow produces a signed build
+        - [ ] `CHANGELOG.md` has the entry below under `Unreleased`
+        - [ ] ROADMAP.md marks this row as Done
+    validations:
+      required: true
+  - type: textarea
+    id: changelog
+    attributes:
+      label: CHANGELOG entry
+      description: The draft text for CHANGELOG.md.
+      render: markdown

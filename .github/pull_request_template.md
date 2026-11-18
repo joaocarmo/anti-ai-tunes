@@ -18,6 +18,7 @@ Closes #
 - [ ] The app target builds
 - [ ] `CHANGELOG.md` has an `Unreleased` entry (if users see the change)
 - [ ] `ARCHITECTURE.md` is updated (if an invariant or boundary changed)
+- [ ] `ROADMAP.md` marks the increment as Done (for an increment PR)
 - [ ] The commit messages follow Conventional Commits
 
 ## AI assistance
