@@ -1,0 +1,9 @@
+# Template chooser config: https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/joaocarmo/anti-ai-tunes/security/advisories/new
+    about: Report security problems privately. Do not open a public issue.
+  - name: AI artist missing from the list
+    url: https://github.com/CennoxX/spotify-ai-blocker/issues/new?template=ai-artist.yml
+    about: The default AI-artist list is maintained upstream. Suggest additions there.

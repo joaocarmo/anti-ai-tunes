@@ -1,0 +1,73 @@
+# Issue form syntax: https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-issue-forms
+name: Bug report
+description: Something in the app does not work as described.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. For a wrongly flagged or missing artist, use the **Wrong match** form instead.
+  - type: input
+    id: app-version
+    attributes:
+      label: App version
+      description: Menu bar icon › About.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS version
+      description: Run `sw_vers -productVersion` in Terminal.
+      placeholder: "26.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: track-source
+    attributes:
+      label: Where did the song play from?
+      options:
+        - My library
+        - Streamed from Apple Music (not in my library)
+        - Radio station
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Play ...
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: history
+    attributes:
+      label: Recent history (optional)
+      description: |
+        Output of:
+        sqlite3 ~/Library/Application\ Support/AntiAITunes/db.sqlite 'select started_at, artist, name, outcome, error from play order by id desc limit 10'
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched the existing issues and found no duplicate.
+          required: true

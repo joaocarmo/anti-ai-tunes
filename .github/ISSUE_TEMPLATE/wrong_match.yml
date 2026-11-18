@@ -1,0 +1,47 @@
+# Issue form syntax: https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-issue-forms
+name: Wrong match
+description: An artist was flagged as AI by mistake, or an AI artist was missed.
+title: "[Wrong match]: "
+labels: ["wrong-match"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The AI-artist lists are maintained upstream. If an artist is wrongly on a list, or missing from it, please report it to the list's maintainers. For the default list, use the [spotify-ai-blocker issue form](https://github.com/CennoxX/spotify-ai-blocker/issues/new?template=ai-artist.yml).
+
+        To stop the app flagging one artist on your Mac, click **Not AI** in the notification.
+
+        Use this form when the app matched wrongly although the list is right. For example, it split an artist name in the wrong place.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What went wrong?
+      options:
+        - A human artist was flagged as AI
+        - A listed AI artist was not flagged
+    validations:
+      required: true
+  - type: input
+    id: artist
+    attributes:
+      label: Artist, exactly as the Music app shows it
+      placeholder: "Artist A & Artist B"
+    validations:
+      required: true
+  - type: input
+    id: song-title
+    attributes:
+      label: Song title, exactly as the Music app shows it
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Which list matched (or should have)?
+      placeholder: "spotify-ai-blocker"
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
