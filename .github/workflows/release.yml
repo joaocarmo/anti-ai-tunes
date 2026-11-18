@@ -19,12 +19,15 @@ jobs:
       contents: write
     env:
       TAG: ${{ github.event.release.tag_name }}
-      KEYCHAIN: ${{ runner.temp }}/signing.keychain-db
       SIGN_IDENTITY: Anti-AI Tunes
     steps:
       - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
+
+      # The runner context is not available in job-level env.
+      - name: Set the keychain path
+        run: echo "KEYCHAIN=$RUNNER_TEMP/signing.keychain-db" >> "$GITHUB_ENV"
 
       - name: Import the signing certificate
         env:
