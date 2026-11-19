@@ -19,10 +19,15 @@ rm -rf "$app"
 mkdir -p "$app/Contents/MacOS"
 
 # One plain build per architecture, merged with lipo: the same build mode as `swift test`.
+# Swift 6.4 builds every architecture into the same folder, so each binary is copied out before the next build.
+thin=.build/bundle-thin
+rm -rf "$thin"
+mkdir -p "$thin"
 set --
 for arch in $archs; do
     swift build -c release --product AntiAITunes --arch "$arch" >&2
-    set -- "$@" "$(swift build -c release --product AntiAITunes --arch "$arch" --show-bin-path)/AntiAITunes"
+    cp "$(swift build -c release --product AntiAITunes --arch "$arch" --show-bin-path)/AntiAITunes" "$thin/$arch"
+    set -- "$@" "$thin/$arch"
 done
 binary="$app/Contents/MacOS/AntiAITunes"
 lipo -create "$@" -output "$binary"
