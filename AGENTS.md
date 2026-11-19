@@ -29,7 +29,7 @@ When the increment closes, plan the next one and open its issue. [CONTRIBUTING.m
 - `Tests/AntiAITunesCoreTests/`: unit tests and hand-written fakes.
 - `App/`: the app's SwiftPM executable target. Thin adapters and SwiftUI views only. No Xcode project.
 - `Support/`: `Info.plist` and entitlements for the app bundle.
-- `scripts/`: `coverage.sh` (coverage gate), `bundle.sh` (build and sign the `.app`), `run.sh` (bundle and open locally).
+- `scripts/`: `coverage.sh` (coverage gate), `bundle.sh` (build and sign the `.app`), `run.sh` (bundle and open locally), `release-notes.sh` (CHANGELOG section for a release).
 - `.github/`: CI, release workflow, issue and PR templates.
 
 ## Commands

@@ -1,8 +1,10 @@
 name: Release
 
+# Pushing a vX.Y.Z tag builds, signs and creates a draft release with the assets.
+# The maintainer reviews the draft and publishes it. Releases are immutable once published.
 on:
-  release:
-    types: [published]
+  push:
+    tags: ["v*"]
 
 permissions: {}
 
@@ -20,7 +22,7 @@ jobs:
       contents: write
     env:
       DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
-      TAG: ${{ github.event.release.tag_name }}
+      TAG: ${{ github.ref_name }}
       SIGN_IDENTITY: Anti-AI Tunes
     steps:
       - uses: actions/checkout@v7.0.1
@@ -64,18 +66,18 @@ jobs:
           # A certificate-based requirement keeps user permissions across updates; ad hoc would show a cdhash.
           grep -q 'certificate leaf = H"' requirement.txt
 
-      - name: Upload to the release
+      - name: Create the draft release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           zip="AntiAITunes-$TAG.zip"
           ditto -c -k --keepParent .build/AntiAITunes.app "$zip"
           shasum -a 256 "$zip" > "$zip.sha256"
-          gh release upload "$TAG" "$zip" "$zip.sha256" --clobber --repo "$GITHUB_REPOSITORY"
-          gh release view "$TAG" --json body --jq .body --repo "$GITHUB_REPOSITORY" > notes.md
-          printf '\n\n' >> notes.md
-          cat .github/release-install-note.md >> notes.md
-          gh release edit "$TAG" --notes-file notes.md --repo "$GITHUB_REPOSITORY"
+          scripts/release-notes.sh "${TAG#v}" > notes.md
+          prerelease=""
+          case "$TAG" in *-*) prerelease="--prerelease" ;; esac
+          gh release create "$TAG" "$zip" "$zip.sha256" --draft --verify-tag $prerelease \
+            --title "$TAG" --notes-file notes.md --repo "$GITHUB_REPOSITORY"
 
       - name: Restore the keychain list and delete the keychain
         if: always()

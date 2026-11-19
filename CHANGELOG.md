@@ -6,6 +6,12 @@ The format is based on Keep a Changelog 1.1.0.[^1] This project follows Semantic
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-19
+
+### Fixed
+
+- Releases now include the signed app. The 0.1.0 release was published without it.
+
 ## [0.1.0] - 2026-11-19
 
 ### Added
@@ -14,7 +20,8 @@ The format is based on Keep a Changelog 1.1.0.[^1] This project follows Semantic
 - Project documentation, community files and issue and pull request templates.
 - A roadmap and an increment-based workflow for contributors.
 
-[unreleased]: https://github.com/joaocarmo/anti-ai-tunes/compare/v0.1.0...HEAD
+[unreleased]: https://github.com/joaocarmo/anti-ai-tunes/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/joaocarmo/anti-ai-tunes/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/joaocarmo/anti-ai-tunes/releases/tag/v0.1.0
 
 [^1]: Keep a Changelog 1.1.0. <https://keepachangelog.com/en/1.1.0/>
