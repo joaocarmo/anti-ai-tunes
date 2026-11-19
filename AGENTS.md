@@ -43,6 +43,15 @@ scripts/bundle.sh                                               # build and sign
 
 The first 3 run on macOS and on Linux, where `Package.swift` leaves out the app target. In a Linux sandbox, check whether `swift` is on `PATH` and set `SWIFT_BACKTRACE=enable=no`. The app itself builds only on macOS, so CI (`.github/workflows/ci.yml`) is the final check. CI pins the newest toolchain: the `xcode-27` runner with Xcode 27.2. Change both workflows together. Run the same steps before you finish.
 
+## Linux sandbox
+
+Agents often run in a Linux container without Xcode.
+
+- Install a Swift 6.4 toolchain for Linux from swift.org and verify its signature. If it fails with `libncurses.so.6` missing, extract the `libncurses6` package's libraries next to the toolchain (`usr/lib/swift/linux`). Set `SWIFT_BACKTRACE=enable=no`.
+- The core package builds and tests there. The app target, `scripts/bundle.sh` and anything that talks to Music need macOS, so CI is the check for them.
+- The clone's `origin` may point to a local mirror. Push to a remote that points to GitHub.
+- `gh actions-lock` needs `gh extension install github/gh-actions-lock --pin v0.4.1`.
+
 ## Hard rules
 
 - [ ] Package line coverage stays at 100%. The package has no coverage exclusions.
