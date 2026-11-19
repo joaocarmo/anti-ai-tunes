@@ -8,6 +8,7 @@ The format is based on Keep a Changelog 1.1.0.[^1] This project follows Semantic
 
 ### Added
 
+- A menu-bar app that shows the artist and title playing in the Music app.
 - Project documentation, community files and issue and pull request templates.
 - A roadmap and an increment-based workflow for contributors.
 

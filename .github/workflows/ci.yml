@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions: {}
+
+jobs:
+  test:
+    # Newest image: macOS 27 with Xcode 27. Fallback if it misbehaves: macos-26 with Xcode_26.6.
+    runs-on: xcode-27
+    permissions:
+      contents: read
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Show toolchain
+        run: swift --version
+
+      - name: Check formatting
+        run: swift format lint --strict -r Sources Tests App Package.swift
+
+      - name: Run tests
+        run: swift test --enable-code-coverage
+
+      - name: Check coverage
+        run: scripts/coverage.sh
+
+      - name: Build the universal app, as a release does
+        run: ARCHS="arm64 x86_64" scripts/bundle.sh
+
+  lockfile:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check that actions.lock matches the workflows
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh extension install github/gh-actions-lock --pin v0.4.1
+          gh actions-lock --no-fix

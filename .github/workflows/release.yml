@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions: {}
+
+jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
+  build:
+    needs: test
+    # Same image and Xcode as ci.yml.
+    runs-on: xcode-27
+    permissions:
+      contents: write
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
+      TAG: ${{ github.event.release.tag_name }}
+      SIGN_IDENTITY: Anti-AI Tunes
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      # The runner context is not available in job-level env.
+      - name: Set the keychain path
+        run: echo "KEYCHAIN=$RUNNER_TEMP/signing.keychain-db" >> "$GITHUB_ENV"
+
+      - name: Import the signing certificate
+        env:
+          P12_BASE64: ${{ secrets.SIGNING_CERT_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.SIGNING_CERT_PASSWORD }}
+        run: |
+          umask 077
+          keychain_password=$(openssl rand -hex 32)
+          printf '%s' "$P12_BASE64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security create-keychain -p "$keychain_password" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$keychain_password" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" -P "$P12_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$keychain_password" "$KEYCHAIN" > /dev/null
+          rm "$RUNNER_TEMP/cert.p12"
+          security list-keychains -d user > "$RUNNER_TEMP/original-keychains"
+          security list-keychains -d user -s "$KEYCHAIN" "$HOME/Library/Keychains/login.keychain-db"
+          # The certificate is self-signed and untrusted, so `find-identity -v` would not list it.
+          security find-certificate -c "$SIGN_IDENTITY" "$KEYCHAIN" > /dev/null
+
+      - name: Build and sign a universal app
+        run: |
+          # CFBundleShortVersionString must be numeric, so v0.1.0-rc1 builds as 0.1.0.
+          version=${TAG#v}
+          version=${version%%-*}
+          ARCHS="arm64 x86_64" scripts/bundle.sh "$version" "$GITHUB_RUN_NUMBER"
+
+      - name: Check the signature
+        run: |
+          codesign --verify --deep --strict .build/AntiAITunes.app
+          codesign -d -r- .build/AntiAITunes.app 2>&1 | tee requirement.txt
+          # A certificate-based requirement keeps user permissions across updates; ad hoc would show a cdhash.
+          grep -q 'certificate leaf = H"' requirement.txt
+
+      - name: Upload to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          zip="AntiAITunes-$TAG.zip"
+          ditto -c -k --keepParent .build/AntiAITunes.app "$zip"
+          shasum -a 256 "$zip" > "$zip.sha256"
+          gh release upload "$TAG" "$zip" "$zip.sha256" --clobber --repo "$GITHUB_REPOSITORY"
+          gh release view "$TAG" --json body --jq .body --repo "$GITHUB_REPOSITORY" > notes.md
+          printf '\n\n' >> notes.md
+          cat .github/release-install-note.md >> notes.md
+          gh release edit "$TAG" --notes-file notes.md --repo "$GITHUB_REPOSITORY"
+
+      - name: Restore the keychain list and delete the keychain
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/original-keychains" ]; then
+            xargs security list-keychains -d user -s < "$RUNNER_TEMP/original-keychains"
+          fi
+          security delete-keychain "$KEYCHAIN" || true

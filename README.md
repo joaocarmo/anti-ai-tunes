@@ -2,7 +2,7 @@
 
 Anti-AI Tunes is a small menu-bar app for the Mac. It watches what plays in the Music app. If the artist is on a list of AI-generated artists, it skips the song. It also asks Apple Music to suggest less like it, where macOS allows this.
 
-> **Status: pre-alpha.** The app is not built yet. This README describes the planned app. There are no releases yet.
+> **Status: early.** Version 0.1.0 shows the song playing in the Music app. Skipping AI artists arrives in 0.2.0. This README describes the planned app. [ROADMAP.md](ROADMAP.md) lists what is done and what comes next.
 
 ## Why
 

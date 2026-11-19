@@ -2,7 +2,7 @@
 
 Anti-AI Tunes is a macOS menu-bar app. It skips AI-generated artists in the Music app (Apple Music). Stack: Swift, SwiftUI, SQLite through GRDB.
 
-Status: pre-alpha. Only documentation exists. The layout and commands below describe the planned code.
+Status: v0.1.0 in progress. The core package and a menu-bar app that shows the current song exist. ARCHITECTURE.md marks planned types.
 
 This file follows the AGENTS.md convention.[^1] Claude Code reads it directly, so the repo has no `CLAUDE.md`.[^2]
 
@@ -27,21 +27,21 @@ When the increment closes, plan the next one and open its issue. [CONTRIBUTING.m
 
 - `Package.swift`, `Sources/AntiAITunesCore/`: all logic. A local Swift package.
 - `Tests/AntiAITunesCoreTests/`: unit tests and hand-written fakes.
-- `App/`: the Xcode project. Thin adapters and SwiftUI views only.
+- `App/`: the app's SwiftPM executable target. Thin adapters and SwiftUI views only. No Xcode project.
+- `Support/`: `Info.plist` and entitlements for the app bundle.
+- `scripts/`: `coverage.sh` (coverage gate), `bundle.sh` (build and sign the `.app`), `run.sh` (bundle and open locally).
 - `.github/`: CI, release workflow, issue and PR templates.
 
 ## Commands
 
-All commands run on macOS with Xcode 16 or later.
-
 ```sh
-swift format lint --strict -r Sources Tests App   # format check
-swift test --enable-code-coverage                 # tests
-xcodebuild build -project App/AntiAITunes.xcodeproj -scheme AntiAITunes \
-  -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO   # app compiles
+swift format lint --strict -r Sources Tests App Package.swift   # format check
+swift test --enable-code-coverage                               # tests
+scripts/coverage.sh                                             # 100% line coverage gate
+scripts/bundle.sh                                               # build and sign the app (macOS only)
 ```
 
-The coverage gate is in `.github/workflows/ci.yml`. Run the same steps locally before you finish.
+The first 3 run on macOS and on Linux, where `Package.swift` leaves out the app target. In a Linux sandbox, check whether `swift` is on `PATH` and set `SWIFT_BACKTRACE=enable=no`. The app itself builds only on macOS, so CI (`.github/workflows/ci.yml`) is the final check. CI pins the newest toolchain: the `xcode-27` runner with Xcode 27.2. Change both workflows together. Run the same steps before you finish.
 
 ## Hard rules
 
@@ -49,7 +49,7 @@ The coverage gate is in `.github/workflows/ci.yml`. Run the same steps locally b
 - [ ] `App/` has no logic. Move any real `if`, `guard`, `switch` or `??` into the package, with a test.
 - [ ] The package never imports AppKit, SwiftUI or UserNotifications.
 - [ ] Never launch Music.app. Check that it is running before any Apple Event.
-- [ ] Read track data only from the `com.apple.Music.playerInfo` notification. Never read it with Apple Events.
+- [ ] Detect song changes only from the `com.apple.Music.playerInfo` notification. Never poll Music. One read of the current song at launch is allowed.
 - [ ] Act on a track only while its key matches the latest `playerInfo`.
 - [ ] Attempt the dislike before `next track`. Never claim a dislike unless the read-back says `true`.
 - [ ] Downloaded list data reaches a transform command only on stdin. It never becomes part of a shell command.
