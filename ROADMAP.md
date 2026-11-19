@@ -26,7 +26,7 @@ This file lists what comes next and in which order. It also records the product 
 | 11 | v1.0.0 | Stable release, after v0.8.0 runs for a while with no open bugs. | Planned |
 | 12 | later | Experimental: "Suggest Less" through UI scripting, if macOS offers a reliable control. | Idea |
 
-Increment 3 needs the signing certificate and 2 repository secrets first. See "One-time signing setup" in CONTRIBUTING.md.
+Increment 3 shipped as v0.1.1. The v0.1.0 release has no build attached (see CHANGELOG.md).
 
 ## Product decisions
 
@@ -46,6 +46,12 @@ Increment 3 needs the signing certificate and 2 repository secrets first. See "O
 | History | 1 row per song played. The newest 1,000 rows stay in `db.sqlite`. Older rows move to `history-archive.sqlite` in the same folder. |
 | Storage | SQLite through GRDB, in `~/Library/Application Support/AntiAITunes/`. Settings in `UserDefaults`. |
 | Library songs | Treated like any other song. |
+| Manual decisions | **Not AI** stores `allow` for each matched part, so "A & B" with A listed allows A. **Mark as AI** stores `skip` for the whole artist string, so marking "A & B" does not cover A alone. |
+| Report upstream | Opens `https://github.com/CennoxX/spotify-ai-blocker/issues/new?template=ai-artist.yml&artist_name=<name>`. That form also requires Spotify artist and track URLs, which the user adds by hand. |
+| Notification settings | At launch and when the app becomes active, it reads `UNNotificationSettings`. If notifications are off or `alertStyle` is not `.alert`, the menu shows a warning with a button to `x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=<bundle id>` (fallback: `com.apple.preference.notifications?id=<bundle id>`). |
+| Transform command | Local settings only, never from a list. Runs `/bin/zsh -c <command>` with the download on stdin and expects 1 name per line. 30-second timeout and an output cap. On failure the previous rows stay. |
+| Launch at login | `SMAppService.mainApp`, on by default, with a Settings toggle. |
+| Default list storage (v0.2.0) | A JSON cache file (`default-list.json`: names, ETag, fetch date) until SQLite arrives in v0.3.0. |
 | Releases | Signed with one self-signed certificate. Not notarised. |
 
 ## Spike results (macOS 27.0.1)
@@ -55,4 +61,27 @@ The spike ran on 18 November 2026 with streamed songs only.
 - **Track data.** `playerInfo` has `Name`, `Artist`, `Album`, `Genre`, `Composer`, `Total Time` and `Player State`. It has no persistent ID and no store URL. `Total Time` can change for the same song.
 - **Skip and back.** `next track` works. `previous track` first restarts the song if it has played for a few seconds. A second call then goes back.
 - **Dislike.** `set disliked of current track to true` gives no error. Reading it back returns `false`, and the song's menu still offers "Suggest Less". Music ignores it.
-- **Suggest Less.** It is not in the menu bar. It is only in the Now Playing bar and on each song row. The accessibility tree shows the row buttons only while the row is on screen. A full-screen Music window is not visible to the accessibility API.
+- **Suggest Less.** It is not in the menu bar. It is only in the Now Playing bar and on each song row. The accessibility tree shows the row buttons ("More") only while the row is on screen. It shows no Now Playing button, and the Mini Player exposes none. A full-screen Music window is not visible to the accessibility API.
+- **Accessibility permission.** On macOS 27 it is under Privacy & Security › Device Control and Data Access.
+- **Launch read.** `get {name, artist, album} of current track` returned the streamed song. Reports say this failed on macOS 26.0, so the read stays best-effort.
+
+## Decisions and alternatives
+
+| Topic | Chosen | Rejected | Why |
+|---|---|---|---|
+| Packaging | SwiftPM executable and shell scripts | Xcode project, XcodeGen, swift-bundler | Plain-text build files that agents in a Linux sandbox can read and check. XcodeGen adds a tool everywhere. swift-bundler's last release is from 2022. |
+| Universal build | One `swift build` per architecture, merged with `lipo` | One build with 2 `--arch` flags | Same build mode as `swift test`. Swift 6.4 builds every architecture into the same folder, so each thin binary is copied out first. |
+| Signing | One self-signed certificate | Developer ID and notarisation, ad hoc | No paid membership. Ad hoc signatures change with every build, so macOS asks for permissions again. |
+| Releases | Tag push creates a draft with assets, then publish | Upload after publishing | The repo uses immutable releases, which lock assets on publish. |
+| CI steps | Shell steps for the keychain and `gh` for releases | Apple-Actions/import-codesign-certs, softprops/action-gh-release | GitHub's own signing guide uses the same commands. Fewer third-party actions handle secrets or a write token. |
+| Action pinning | `actions.lock` from `gh actions-lock` | SHA pins in workflow files | GitHub's recommendation. It also covers transitive actions. |
+| CI image | `xcode-27` runner with Xcode 27.2 | `macos-26` with Xcode 26.6 | Newest toolchain, same Swift (6.4.2) as the sandbox, so `swift format` agrees. The image is in preview; `macos-26` is the fallback. |
+| Coverage gate | `scripts/coverage.sh` inside the required `test` check | GitHub Code Quality's coverage rule | Code Quality is paid per committer and needs a Cobertura report. |
+| Dislike | AppleScript attempt with read-back | Apple Music API ratings, UI-scripted "Suggest Less" | The API needs a paid membership. The UI control is not reliably reachable (see the spike). |
+| Test doubles | Hand-written fakes with one shared event log | Mockable and other macro libraries | Tests can check call order, with no dependency. Revisit above about 6 ports. |
+| Persistence in v0.2.0 | JSON cache file | GRDB now | GRDB arrives with decisions in v0.3.0. GRDB on Linux is unofficial. |
+
+## Beyond the roadmap
+
+- A History window: one row per song with the action taken, and buttons for **Not AI**, **Mark as AI** and **Report upstream**. It reads the main database and, on demand, the archive.
+- A REST API on top of the core package. The package has no UI imports so that a server can use it.

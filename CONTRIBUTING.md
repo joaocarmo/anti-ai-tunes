@@ -111,6 +111,19 @@ These rules apply to docs, PR descriptions and issues.
 - Say in the PR that an agent helped, and which one.
 - Claude Code reads `AGENTS.md` when the repo has no `CLAUDE.md`.[^8] A personal `CLAUDE.local.md` turns that off. If you need one, set **Project instructions** to `claude-md-and-agents-md` in `/config`.
 
+## Repository settings (maintainers)
+
+These settings live on GitHub, not in the code. Update this list when one changes.
+
+- **`main` ruleset:** no deletion and no force push. Commits must be signed. Pull requests need 1 approval from a code owner and the checks `test` and `lockfile`. Repository admins may bypass it for pull requests only.
+- **Why the bypass:** agents open pull requests under the maintainer's account. GitHub does not let authors approve their own pull requests, so the maintainer merges with the bypass.
+- **Releases:** immutable. See "Releases" below.
+- **Actions:** the Require lockfile policy is on. Workflows run only with `actions.lock` entries.
+- **Security:** private vulnerability reporting is on. `SECURITY.md` and the Code of Conduct depend on it.
+- **Moderation:** reported content should be accepted from contributors (Settings › Moderation options).
+- **Labels:** `increment`, `wrong-match`, plus GitHub's defaults.
+- **Secrets:** `SIGNING_CERT_P12_BASE64` and `SIGNING_CERT_PASSWORD` (see "One-time signing setup").
+
 ## Releases (maintainers)
 
 The project uses Semantic Versioning 2.0.0.[^9]
@@ -120,7 +133,7 @@ The project uses Semantic Versioning 2.0.0.[^9]
 3. The release workflow tests, signs and zips the app. It creates a **draft** release with the zip, its SHA-256 and notes from the CHANGELOG section.
 4. Review the draft and publish it.
 
-Releases are immutable once published: their assets and tag can never change, and a tag name can never be reused.[^10] Only publish a draft that has its assets. A broken release needs a new patch version.
+Releases are immutable once published.[^10] Their assets and tag can never change, and a tag name can never be reused. Only publish a draft that has its assets. A broken release needs a new patch version.
 
 ### One-time signing setup
 
