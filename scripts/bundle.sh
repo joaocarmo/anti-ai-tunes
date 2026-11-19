@@ -31,8 +31,9 @@ for arch in $archs; do
 done
 binary="$app/Contents/MacOS/AntiAITunes"
 lipo -create "$@" -output "$binary"
-# archs stays unquoted: it is a list.
-lipo "$binary" -verify_arch $archs
+for arch in $archs; do
+    lipo -archs "$binary" | tr ' ' '\n' | grep -qx "$arch"
+done
 
 sed -e "s/__VERSION__/$version/" -e "s/__BUILD__/$build/" Support/Info.plist > "$app/Contents/Info.plist"
 
