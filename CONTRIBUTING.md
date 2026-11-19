@@ -115,9 +115,12 @@ These rules apply to docs, PR descriptions and issues.
 
 The project uses Semantic Versioning 2.0.0.[^9]
 
-1. Move the `Unreleased` entries in `CHANGELOG.md` under a new version heading with today's date (`YYYY-MM-DD`).
-2. Tag the commit `vX.Y.Z` and publish a GitHub release for it.
-3. The release workflow tests, signs, zips and uploads the app.
+1. Move the `Unreleased` entries in `CHANGELOG.md` under a new version heading with today's date (`YYYY-MM-DD`), and merge that change.
+2. Tag the merge commit on `main` and push the tag: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+3. The release workflow tests, signs and zips the app. It creates a **draft** release with the zip, its SHA-256 and notes from the CHANGELOG section.
+4. Review the draft and publish it.
+
+Releases are immutable once published: their assets and tag can never change, and a tag name can never be reused.[^10] Only publish a draft that has its assets. A broken release needs a new patch version.
 
 ### One-time signing setup
 
@@ -139,3 +142,4 @@ Releases are signed with one self-signed certificate, so macOS keeps user permis
 [^7]: GitHub Docs, "Basic writing and formatting syntax", section "Footnotes". <https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax>
 [^8]: Claude Code docs, "How Claude remembers your project", section "AGENTS.md". <https://code.claude.com/docs/en/memory>
 [^9]: Semantic Versioning 2.0.0. <https://semver.org/spec/v2.0.0.html>
+[^10]: GitHub Docs, "Immutable releases". <https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/immutable-releases>
