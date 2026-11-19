@@ -41,7 +41,7 @@ scripts/coverage.sh                                             # 100% line cove
 scripts/bundle.sh                                               # build and sign the app (macOS only)
 ```
 
-The first 3 run on macOS and on Linux, where `Package.swift` leaves out the app target. In a Linux sandbox, check whether `swift` is on `PATH` and set `SWIFT_BACKTRACE=enable=no`. The app itself builds only on macOS, so CI (`.github/workflows/ci.yml`) is the final check. Run the same steps before you finish.
+The first 3 run on macOS and on Linux, where `Package.swift` leaves out the app target. In a Linux sandbox, check whether `swift` is on `PATH` and set `SWIFT_BACKTRACE=enable=no`. The app itself builds only on macOS, so CI (`.github/workflows/ci.yml`) is the final check. CI pins the newest toolchain: the `xcode-27` runner with Xcode 27.2. Change both workflows together. Run the same steps before you finish.
 
 ## Hard rules
 

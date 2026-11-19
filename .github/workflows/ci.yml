@@ -10,9 +10,12 @@ permissions: {}
 
 jobs:
   test:
-    runs-on: macos-26
+    # Newest image: macOS 27 with Xcode 27. Fallback if it misbehaves: macos-26 with Xcode_26.6.
+    runs-on: xcode-27
     permissions:
       contents: read
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
     steps:
       - uses: actions/checkout@v7.0.1
         with:
@@ -30,5 +33,5 @@ jobs:
       - name: Check coverage
         run: scripts/coverage.sh
 
-      - name: Build the app
-        run: scripts/bundle.sh
+      - name: Build the universal app, as a release does
+        run: ARCHS="arm64 x86_64" scripts/bundle.sh

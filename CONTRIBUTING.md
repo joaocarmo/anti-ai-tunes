@@ -13,7 +13,7 @@ Status: v0.1.0 in progress.
 
 ## Set up
 
-You need a Mac with macOS 14 or later and Xcode 16 or later. Xcode 16 includes `swift format`, so you need no extra tools.[^1] There is no Xcode project. Open `Package.swift` in Xcode to edit and debug.
+You need a Mac with macOS 14 or later and Xcode 16 or later. Xcode 16 includes `swift format`, so you need no extra tools.[^1] CI uses Xcode 27.2. Use the same version, because `swift format` rules can differ between versions. There is no Xcode project. Open `Package.swift` in Xcode to edit and debug.
 
 ```sh
 git clone https://github.com/joaocarmo/anti-ai-tunes.git

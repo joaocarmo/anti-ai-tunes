@@ -12,20 +12,27 @@ cd "$(dirname "$0")/.."
 version=${1:-0.0.0}
 build=${2:-1}
 identity=${SIGN_IDENTITY:--}
-
-arch_flags=""
-for arch in ${ARCHS:-}; do
-    arch_flags="$arch_flags --arch $arch"
-done
-
-swift build -c release --product AntiAITunes $arch_flags >&2
-bin_dir=$(swift build -c release --product AntiAITunes $arch_flags --show-bin-path)
+archs=${ARCHS:-$(uname -m)}
 
 app=.build/AntiAITunes.app
 rm -rf "$app"
 mkdir -p "$app/Contents/MacOS"
-cp "$bin_dir/AntiAITunes" "$app/Contents/MacOS/AntiAITunes"
+
+# One plain build per architecture, merged with lipo: the same build mode as `swift test`.
+set --
+for arch in $archs; do
+    swift build -c release --product AntiAITunes --arch "$arch" >&2
+    set -- "$@" "$(swift build -c release --product AntiAITunes --arch "$arch" --show-bin-path)/AntiAITunes"
+done
+binary="$app/Contents/MacOS/AntiAITunes"
+lipo -create "$@" -output "$binary"
+# archs stays unquoted: it is a list.
+lipo "$binary" -verify_arch $archs
+
 sed -e "s/__VERSION__/$version/" -e "s/__BUILD__/$build/" Support/Info.plist > "$app/Contents/Info.plist"
+
+# Extended attributes break the code signature.
+xattr -cr "$app"
 
 set -- --force --options runtime --timestamp=none --entitlements Support/AntiAITunes.entitlements --sign "$identity"
 if [ -n "${KEYCHAIN:-}" ]; then
