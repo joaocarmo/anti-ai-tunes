@@ -79,12 +79,13 @@ A change is done when all of these pass:
 - [ ] `swift test --enable-code-coverage`, with package line coverage at 100%
 - [ ] `scripts/coverage.sh` passes
 - [ ] The app builds with `scripts/bundle.sh`
+- [ ] `gh actions-lock --no-fix` passes, if a workflow changed
 - [ ] Every new branch of logic has a test
 - [ ] `CHANGELOG.md` has an `Unreleased` entry for user-visible changes[^3]
 - [ ] `ARCHITECTURE.md` is updated if an invariant or a boundary changed
 - [ ] The README is updated if users see a change
 
-CI runs the same checks on every pull request.
+CI runs the same checks on every pull request. The `main` ruleset requires its 2 jobs, `test` and `lockfile`, to pass. `.github/CODEOWNERS` names the maintainer as owner of every file.
 
 ## Code style
 
