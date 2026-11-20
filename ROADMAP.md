@@ -23,8 +23,9 @@ This file lists what comes next and in which order. It also records the product 
 | 8 | v0.6.0 | Subscribed lists: add and edit lists, `lines` format, transform command. | Planned |
 | 9 | v0.7.0 | Manual control: mark as AI, report upstream, list of decisions. | Planned |
 | 10 | v0.8.0 | History archive. | Planned |
-| 11 | v1.0.0 | Stable release, after v0.8.0 runs for a while with no open bugs. | Planned |
-| 12 | later | Experimental: "Suggest Less" through UI scripting, if macOS offers a reliable control. | Idea |
+| 11 | v0.9.0 | Polish: app icon, menu-bar icon, About panel with the version. Check for a newer release, with an off switch (no auto-update). | Planned |
+| 12 | v1.0.0 | Stable release, after v0.9.0 runs for a while with no open bugs. | Planned |
+| 13 | later | Experimental: "Suggest Less" through UI scripting, if macOS offers a reliable control. | Idea |
 
 Increment 3 shipped as v0.1.1. The v0.1.0 release has no build attached (see CHANGELOG.md).
 
