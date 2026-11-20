@@ -27,6 +27,6 @@
     <key>LSUIElement</key>
     <true/>
     <key>NSAppleEventsUsageDescription</key>
-    <string>Anti-AI Tunes reads the song that is playing in Music. Later versions also skip songs by AI-generated artists.</string>
+    <string>Anti-AI Tunes reads the song that is playing in Music and skips songs by AI-generated artists.</string>
 </dict>
 </plist>

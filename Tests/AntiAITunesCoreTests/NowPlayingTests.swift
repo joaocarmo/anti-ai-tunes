@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 
 @testable import AntiAITunesCore
@@ -51,5 +52,13 @@ struct NowPlayingTests {
     @Test func leavesOutAnEmptyArtist() {
         let stream = Track(name: "Live stream", artist: "", album: "")
         #expect(MenuState(.track(stream, .playing)).lines == ["Live stream"])
+    }
+}
+
+struct MenuStateTests {
+    @Test func showsTheListStatus() {
+        #expect(MenuState(.waiting).listStatus == "AI list: not loaded yet")
+        let list = ListCache(names: ["a", "b"], etag: nil, fetchedAt: Date(timeIntervalSince1970: 0))
+        #expect(MenuState(.waiting, list: list).listStatus.hasPrefix("AI list: 2 artists, updated "))
     }
 }

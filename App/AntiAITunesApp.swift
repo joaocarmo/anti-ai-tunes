@@ -11,6 +11,8 @@ struct AntiAITunesApp: App {
                 Text(line)
             }
             Divider()
+            Text(model.menu.listStatus)
+            Divider()
             Button("Quit Anti-AI Tunes") { NSApplication.shared.terminate(nil) }
                 .keyboardShortcut("q")
         }
@@ -20,16 +22,24 @@ struct AntiAITunesApp: App {
 @MainActor
 @Observable
 final class AppModel {
-    private(set) var nowPlaying = NowPlaying.waiting
-    var menu: MenuState { MenuState(nowPlaying) }
+    let refresher: ListRefresher
+    let coordinator: MatchCoordinator
+    var menu: MenuState { MenuState(coordinator.nowPlaying, list: refresher.list) }
     @ObservationIgnored private var observer: MusicObserverAdapter?
 
     init() {
-        observer = MusicObserverAdapter { [weak self] event in
-            self?.nowPlaying.apply(event)
-        }
+        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        let refresher = ListRefresher(
+            directory: support.appendingPathComponent("AntiAITunes"), http: URLSessionHTTPClient(), clock: SystemClock()
+        )
+        let coordinator = MatchCoordinator(
+            music: MusicControllerAdapter(), notifier: NotifierAdapter(), listed: { refresher.names })
+        self.refresher = refresher
+        self.coordinator = coordinator
+        observer = MusicObserverAdapter { coordinator.handle($0) }
+        Task { await refresher.run() }
         if let snapshot = MusicControllerAdapter.currentTrackSnapshot() {
-            nowPlaying.apply(snapshot)
+            coordinator.handle(snapshot)
         }
     }
 }
