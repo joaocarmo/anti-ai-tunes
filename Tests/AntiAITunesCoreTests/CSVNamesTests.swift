@@ -14,6 +14,11 @@ struct CSVNamesTests {
         #expect(CSVNames.parse(csv, column: "artist") == ["doe, jane", "the \"band\"", "two lines"])
     }
 
+    @Test func keepsAQuoteInsideAnUnquotedField() {
+        let csv = "artist,id\nDwayne \"Rock\" Beats,1\nNext,2\n"
+        #expect(CSVNames.parse(csv, column: "artist") == ["dwayne \"rock\" beats", "next"])
+    }
+
     @Test func dropsBlankAndShortNamesAndShortRows() {
         let csv = "id,artist\n1,\n2,-\n3,...\n4,d\n5,  Ai \n6\n\n7,Ada"
         #expect(CSVNames.parse(csv, column: "artist") == ["ai", "ada"])

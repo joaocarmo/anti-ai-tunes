@@ -11,6 +11,14 @@ final class EventLog {
 @MainActor
 struct FakeMusic: MusicControlling {
     let log: EventLog
+    var isRunning = true
+    var fields: [String]?
+
+    func currentTrackFields() -> [String]? {
+        log.events.append("read")
+        return fields
+    }
+
     func nextTrack() { log.events.append("nextTrack") }
 }
 

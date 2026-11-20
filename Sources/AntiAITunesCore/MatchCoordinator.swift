@@ -1,3 +1,4 @@
+import Foundation
 import Observation
 
 /// Follows the Music app and skips songs by listed artists.
@@ -16,15 +17,41 @@ public final class MatchCoordinator {
         self.listed = listed
     }
 
+    /// Reads the current song once at launch, if Music is running.
+    public func start() {
+        guard music.isRunning, let fields = music.currentTrackFields(), let event = PlayerEvent(snapshot: fields)
+        else { return }
+        handle(event)
+    }
+
     /// Applies an update. Checks each song once, the first time it plays.
     public func handle(_ event: PlayerEvent) {
         if nowPlaying.apply(event) { checkedKey = nil }
-        guard case .track(let track, .playing) = nowPlaying, track.key != checkedKey else { return }
+        check()
+    }
+
+    /// Checks the current song again, for example after the list changed.
+    public func recheck() {
+        checkedKey = nil
+        check()
+    }
+
+    private func check() {
+        let listed = listed()
+        // An empty list has not loaded yet. `recheck()` runs when it arrives.
+        guard case .track(let track, .playing) = nowPlaying, track.key != checkedKey, !listed.isEmpty else { return }
         checkedKey = track.key
-        let verdict = Verdict(parts: ArtistParts.parts(artist: track.artist, title: track.name), listed: listed())
-        // Act only while the matched song is still the latest one Music reported.
-        guard verdict.isMatch, nowPlaying.currentTrack?.key == track.key else { return }
+        let verdict = Verdict(parts: ArtistParts.parts(artist: track.artist, title: track.name), listed: listed)
+        // This runs in the same main-actor turn as the `playerInfo` that matched, so the key is still the latest.
+        // A delay before acting must compare the key again.
+        guard verdict.isMatch, music.isRunning else { return }
         music.nextTrack()
-        notifier.post(title: "Skipped \(track.artist) (AI)", body: track.name)
+        let names = verdict.matched.map { Self.displayName($0, in: track.artist + " " + track.name) }
+        notifier.post(title: "Skipped \(names.joined(separator: ", ")) (AI)", body: track.name)
+    }
+
+    /// The matched name as Music shows it, or the normalized name when it cannot be found.
+    static func displayName(_ part: String, in text: String) -> String {
+        text.range(of: part, options: [.caseInsensitive, .diacriticInsensitive]).map { String(text[$0]) } ?? part
     }
 }

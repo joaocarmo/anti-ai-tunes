@@ -63,6 +63,23 @@ struct ListRefresherTests {
         #expect(log.events.count == 6)
     }
 
+    @Test func rejectsAListThatLostMoreThanHalfItsNames() async {
+        func csv(_ names: String...) -> Data { Data((["artist"] + names).joined(separator: "\n").utf8) }
+        let list = refresher([
+            .success(HTTPResponse(status: 200, etag: "a", body: csv("One", "Two", "Three"))),
+            .success(HTTPResponse(status: 200, etag: "b", body: csv("One"))),
+            .success(HTTPResponse(status: 200, etag: "c", body: csv("One", "Two"))),
+        ])
+        var changes = 0
+        list.onChange = { changes += 1 }
+        await list.refresh()
+        await list.refresh()
+        #expect(list.list?.etag == "a")
+        await list.refresh()
+        #expect(list.names == ["one", "two"])
+        #expect(changes == 2)
+    }
+
     @Test func refreshesEvery24Hours() async {
         let clock = FakeClock(log: log)
         clock.sleepsLeft = 1

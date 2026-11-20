@@ -1,8 +1,11 @@
 import Foundation
 
-/// Controls playback in the Music app.
+/// Controls playback in the Music app. Callers check `isRunning` first, because any Apple Event launches Music.
 @MainActor
 public protocol MusicControlling {
+    var isRunning: Bool { get }
+    /// Player state, name, artist and album of the current song, or nil when the read fails.
+    func currentTrackFields() -> [String]?
     func nextTrack()
 }
 
@@ -42,9 +45,12 @@ public struct HTTPResponse: Equatable, Sendable {
 
 /// Reads a response body with a size limit.
 public enum HTTPBody {
-    public struct TooLarge: Error {}
+    public struct TooLarge: Error {
+        public init() {}
+    }
 
     /// Collects the bytes, and throws as soon as there are more than `limit`.
+    @inlinable
     public static func collect<Bytes: AsyncSequence>(_ bytes: Bytes, limit: Int) async throws -> Data
     where Bytes.Element == UInt8 {
         var data = Data()

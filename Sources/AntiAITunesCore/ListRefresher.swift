@@ -24,6 +24,8 @@ public final class ListRefresher {
     public static let maxBytes = 10_000_000
 
     public private(set) var list: ListCache?
+    /// Called after a download replaces the list.
+    @ObservationIgnored public var onChange: @MainActor () -> Void = {}
     private let file: URL
     private let http: any HTTPClient
     private let clock: any Clock
@@ -45,8 +47,12 @@ public final class ListRefresher {
             list?.fetchedAt = clock.now
         case 200:
             let text = String(decoding: response.body, as: UTF8.self)
-            guard let names = CSVNames.parse(text, column: "artist"), !names.isEmpty else { return }
-            list = ListCache(names: Set(names), etag: response.etag, fetchedAt: clock.now)
+            // A list that lost more than half its names is more likely broken than cleaned up.
+            guard let parsed = CSVNames.parse(text, column: "artist").map(Set.init), !parsed.isEmpty,
+                parsed.count * 2 >= names.count
+            else { return }
+            list = ListCache(names: parsed, etag: response.etag, fetchedAt: clock.now)
+            onChange()
         default:
             return
         }

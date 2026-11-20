@@ -36,10 +36,9 @@ final class AppModel {
             music: MusicControllerAdapter(), notifier: NotifierAdapter(), listed: { refresher.names })
         self.refresher = refresher
         self.coordinator = coordinator
+        refresher.onChange = { coordinator.recheck() }
         observer = MusicObserverAdapter { coordinator.handle($0) }
+        coordinator.start()
         Task { await refresher.run() }
-        if let snapshot = MusicControllerAdapter.currentTrackSnapshot() {
-            coordinator.handle(snapshot)
-        }
     }
 }

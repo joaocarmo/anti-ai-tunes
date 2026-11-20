@@ -28,7 +28,8 @@ public enum CSVNames {
                     quoted = false
                 }
             case _ where quoted: field.append(scalar)
-            case "\"": quoted = true
+            // A quote opens quoting only at the start of a field. Elsewhere it is a literal character.
+            case "\"" where field.isEmpty: quoted = true
             case ",":
                 row.append(String(field))
                 field = .init()
