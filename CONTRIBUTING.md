@@ -76,8 +76,9 @@ Common types are `feat`, `fix`, `docs`, `test`, `refactor`, `ci` and `chore`. Ma
 A change is done when all of these pass:
 
 - [ ] `swift format lint --strict -r Sources Tests App Package.swift`
-- [ ] `swift test --enable-code-coverage`, with package line coverage at 100%
+- [ ] `swift test --enable-code-coverage -Xswiftc -warnings-as-errors`, with package line coverage at 100%
 - [ ] `scripts/coverage.sh` passes
+- [ ] `swift test --sanitize=thread` and `swift test --sanitize=address` pass
 - [ ] The app builds with `scripts/bundle.sh`
 - [ ] `gh actions-lock --no-fix` passes, if a workflow changed
 - [ ] Every new branch of logic has a test
