@@ -6,6 +6,10 @@ The format is based on Keep a Changelog 1.1.0.[^1] This project follows Semantic
 
 ## [Unreleased]
 
+### Added
+
+- Skips songs by artists on the default AI-artist list, with a notification. There is no undo yet: use the Music app's back button. **Not AI** arrives in 0.3.0.
+
 ## [0.1.1] - 2026-11-19
 
 ### Fixed
