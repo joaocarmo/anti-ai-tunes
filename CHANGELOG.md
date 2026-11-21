@@ -6,6 +6,8 @@ The format is based on Keep a Changelog 1.1.0.[^1] This project follows Semantic
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-21
+
 ### Changed
 
 - The menu shows the AI list in an **AI list** submenu: the number of artists, when the list last changed and when the app last checked it.
@@ -34,7 +36,8 @@ The format is based on Keep a Changelog 1.1.0.[^1] This project follows Semantic
 - Project documentation, community files and issue and pull request templates.
 - A roadmap and an increment-based workflow for contributors.
 
-[unreleased]: https://github.com/joaocarmo/anti-ai-tunes/compare/v0.2.0...HEAD
+[unreleased]: https://github.com/joaocarmo/anti-ai-tunes/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/joaocarmo/anti-ai-tunes/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/joaocarmo/anti-ai-tunes/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/joaocarmo/anti-ai-tunes/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/joaocarmo/anti-ai-tunes/releases/tag/v0.1.0
