@@ -57,8 +57,13 @@ struct NowPlayingTests {
 
 struct MenuStateTests {
     @Test func showsTheListStatus() {
-        #expect(MenuState(nowPlaying: .waiting).listStatus == "AI list: not loaded yet")
-        let list = ListCache(names: ["a", "b"], etag: nil, fetchedAt: Date(timeIntervalSince1970: 0))
-        #expect(MenuState(nowPlaying: .waiting, list: list).listStatus.hasPrefix("AI list: 2 artists, updated "))
+        #expect(MenuState(nowPlaying: .waiting).listDetails == ["Not loaded yet"])
+        let date = Date(timeIntervalSince1970: 0)
+        var list = ListCache(names: ["a", "b"], etag: nil, checkedAt: date)
+        let checked = "Checked \(date.formatted(date: .abbreviated, time: .shortened))"
+        #expect(MenuState(nowPlaying: .waiting, list: list).listDetails == ["2 artists", checked])
+        list.changedAt = date
+        let changed = "Changed \(date.formatted(date: .abbreviated, time: .shortened))"
+        #expect(MenuState(nowPlaying: .waiting, list: list).listDetails == ["2 artists", changed, checked])
     }
 }

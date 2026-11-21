@@ -11,7 +11,11 @@ struct AntiAITunesApp: App {
                 Text(line)
             }
             Divider()
-            Text(model.menu.listStatus)
+            Menu("AI list") {
+                ForEach(Array(model.menu.listDetails.enumerated()), id: \.offset) { _, line in
+                    Text(line)
+                }
+            }
             Divider()
             Button("Quit Anti-AI Tunes") { NSApplication.shared.terminate(nil) }
                 .keyboardShortcut("q")

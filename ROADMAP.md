@@ -52,7 +52,7 @@ Increment 3 shipped as v0.1.1. The v0.1.0 release has no build attached (see CHA
 | Notification settings | At launch and when the app becomes active, it reads `UNNotificationSettings`. If notifications are off or `alertStyle` is not `.alert`, the menu shows a warning with a button to `x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=<bundle id>` (fallback: `com.apple.preference.notifications?id=<bundle id>`). |
 | Transform command | Local settings only, never from a list. Runs `/bin/zsh -c <command>` with the download on stdin and expects 1 name per line. 30-second timeout and an output cap. On failure the previous rows stay. |
 | Launch at login | `SMAppService.mainApp`, on by default, with a Settings toggle. |
-| Default list storage (v0.2.0) | A JSON cache file (`default-list.json`: names, ETag, fetch date) until SQLite arrives in v0.3.0. |
+| Default list storage (v0.2.0) | A JSON cache file (`default-list.json`: names, ETag, change date and check date) until SQLite arrives in v0.3.0. |
 | Releases | Signed with one self-signed certificate. Not notarised. |
 
 ## Spike results (macOS 27.0.1)
