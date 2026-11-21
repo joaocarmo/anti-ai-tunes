@@ -24,7 +24,11 @@ Apple Music has no way to block an artist. Apple labels AI music only when the l
 4. Allow the app to control Music, and allow notifications.
 5. Set the app's notification style to **Alerts**. The menu shows a warning if it is not.
 
-To update, replace the app. Your permissions stay, because every release is signed with the same certificate.
+To update, replace the app. Your permissions stay, because every release is signed with the same certificate. macOS blocks each new version once, because each download is checked again. To skip **Open Anyway**, run this in Terminal after you replace the app:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/AntiAITunes.app
+```
 
 ## How it works
 
