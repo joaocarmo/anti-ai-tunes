@@ -19,9 +19,9 @@ struct ListRefresherTests {
         #expect(first.list == nil)
         #expect(first.names.isEmpty)
         await first.refresh()
+        let date = Date(timeIntervalSince1970: 1_800_000_000)
         let expected = ListCache(
-            names: ["atomship", "smokey september"], etag: "\"v1\"",
-            fetchedAt: Date(timeIntervalSince1970: 1_800_000_000))
+            names: ["atomship", "smokey september"], etag: "\"v1\"", changedAt: date, checkedAt: date)
         #expect(first.list == expected)
         #expect(log.events == ["get etag=none max=10000000"])
 
@@ -32,18 +32,31 @@ struct ListRefresherTests {
         #expect(second.names == ["atomship", "smokey september"])
     }
 
-    @Test func notModifiedUpdatesTheDate() async {
+    @Test func onlyDifferentNamesUpdateTheChangeDate() async {
         let clock = FakeClock(log: log)
+        let changed = clock.now
         let list = refresher(
             [
                 .success(HTTPResponse(status: 200, etag: "e", body: csv)),
                 .success(HTTPResponse(status: 304, etag: "e", body: Data())),
+                .success(HTTPResponse(status: 200, etag: "f", body: csv)),
             ], clock: clock)
         await list.refresh()
-        clock.now = clock.now.addingTimeInterval(60)
-        await list.refresh()
-        #expect(list.list?.fetchedAt == clock.now)
-        #expect(refresher([]).list?.fetchedAt == clock.now)
+        for _ in 1...2 {
+            clock.now = clock.now.addingTimeInterval(60)
+            await list.refresh()
+            #expect(list.list?.checkedAt == clock.now)
+            #expect(list.list?.changedAt == changed)
+        }
+        #expect(refresher([]).list?.checkedAt == clock.now)
+    }
+
+    @Test func loadsACacheWithoutAChangeDate() throws {
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try Data(#"{"names":["a"],"etag":"e","fetchedAt":0}"#.utf8)
+            .write(to: directory.appendingPathComponent("default-list.json"))
+        let expected = ListCache(names: ["a"], etag: "e", checkedAt: Date(timeIntervalSinceReferenceDate: 0))
+        #expect(refresher([]).list == expected)
     }
 
     @Test func keepsTheCacheOnAnyFailure() async {

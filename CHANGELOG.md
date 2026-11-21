@@ -6,6 +6,14 @@ The format is based on Keep a Changelog 1.1.0.[^1] This project follows Semantic
 
 ## [Unreleased]
 
+### Changed
+
+- The menu shows the AI list in an **AI list** submenu: the number of artists, when the list last changed and when the app last checked it.
+
+### Fixed
+
+- The list date showed the last check, labelled "updated", even when the list had not changed.
+
 ## [0.2.0] - 2026-11-21
 
 ### Added

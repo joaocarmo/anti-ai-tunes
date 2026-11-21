@@ -6,16 +6,18 @@ import Foundation
 public struct MenuState: Equatable, Sendable {
     /// The song lines: name, artist and playback state.
     public let lines: [String]
-    /// The size and age of the AI list.
-    public let listStatus: String
+    /// The AI list lines: the number of artists, when the list last changed and when the app last checked it.
+    public let listDetails: [String]
 
     /// Creates the menu text for `nowPlaying` and `list`.
     public init(nowPlaying: NowPlaying, list: ListCache? = nil) {
-        listStatus =
-            list.map {
-                let updated = $0.fetchedAt.formatted(date: .abbreviated, time: .shortened)
-                return "AI list: \($0.names.count.formatted()) artists, updated \(updated)"
-            } ?? "AI list: not loaded yet"
+        if let list {
+            let changed = list.changedAt.map { ["Changed \(Self.text($0))"] } ?? []
+            listDetails =
+                ["\(list.names.count.formatted()) artists"] + changed + ["Checked \(Self.text(list.checkedAt))"]
+        } else {
+            listDetails = ["Not loaded yet"]
+        }
         switch nowPlaying {
         case .waiting:
             lines = ["Waiting for the next song"]
@@ -25,5 +27,9 @@ public struct MenuState: Equatable, Sendable {
             let status = state == .paused ? ["Paused"] : []
             lines = [track.name, track.artist].filter { !$0.isEmpty } + status
         }
+    }
+
+    private static func text(_ date: Date) -> String {
+        date.formatted(date: .abbreviated, time: .shortened)
     }
 }

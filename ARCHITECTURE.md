@@ -35,7 +35,7 @@ All logic lives here. It has no UI code.
 - `CSVNames`: parses a `csv` body (RFC 4180) and returns the normalised names in a named column. Drops names with fewer than 2 letters or digits. The `lines` format comes with subscribed lists.
 - `TransformRunner` *(planned)*: runs an optional local command. The downloaded body goes in on stdin, and names come out on stdout.
 - `SourceRefresher` *(planned)*: downloads each subscribed list with `If-None-Match`. It replaces that list's rows in one transaction.
-- `ListRefresher` and `ListCache`: download the default list with `If-None-Match` at launch and every 24 hours, with a 10 MB cap. They keep it in `default-list.json`. Any failure keeps the cached list. `SourceRefresher` and `Store` replace them.
+- `ListRefresher` and `ListCache`: download the default list with `If-None-Match` at launch and every 24 hours, with a 10 MB cap. They keep it in `default-list.json`, with the time the names last changed and the time the host last answered. Any failure keeps the cached list. `SourceRefresher` and `Store` replace them.
 - `Store` *(planned)*: the GRDB database, its migrations and all queries.
 - `Archiver` *(planned)*: moves history rows beyond the newest N into the archive database.
 - `MenuState`: the view model. Views only render it.

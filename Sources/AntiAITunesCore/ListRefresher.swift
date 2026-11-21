@@ -6,7 +6,18 @@ import Observation
 public struct ListCache: Codable, Equatable, Sendable {
     var names: Set<String>
     var etag: String?
-    var fetchedAt: Date
+    /// When a download last brought different names.
+    ///
+    /// Nil in caches written before this was recorded.
+    var changedAt: Date?
+    /// When the list host last answered.
+    var checkedAt: Date
+
+    // The check date keeps its first JSON key, so older caches still load.
+    enum CodingKeys: String, CodingKey {
+        case names, etag, changedAt
+        case checkedAt = "fetchedAt"
+    }
 }
 
 /// Keeps the default AI-artist list fresh.
@@ -42,14 +53,16 @@ public final class ListRefresher {
         guard let response = try? await http.get(Self.url, etag: list?.etag, maxBytes: Self.maxBytes) else { return }
         switch response.status {
         case 304:
-            list?.fetchedAt = clock.now
+            list?.checkedAt = clock.now
         case 200:
             let text = String(decoding: response.body, as: UTF8.self)
             // A list that lost more than half its names is more likely broken than cleaned up.
             guard let parsed = CSVNames.parse(text, column: "artist").map(Set.init), !parsed.isEmpty,
                 parsed.count * 2 >= names.count
             else { return }
-            list = ListCache(names: parsed, etag: response.etag, fetchedAt: clock.now)
+            list = ListCache(
+                names: parsed, etag: response.etag, changedAt: parsed == names ? list?.changedAt : clock.now,
+                checkedAt: clock.now)
             onChange()
         default:
             return
