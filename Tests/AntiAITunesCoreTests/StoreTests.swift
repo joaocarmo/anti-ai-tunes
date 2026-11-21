@@ -7,7 +7,7 @@ import Testing
 @MainActor
 struct StoreTests {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-    let url = URL(string: "https://example.com/list.csv")!
+    let url = ListRefresher.url
     let date = Date(timeIntervalSince1970: 1_800_000_000)
 
     @Test func createsAValidSchemaOnce() throws {
@@ -20,22 +20,24 @@ struct StoreTests {
     @Test func keepsDecisionsAcrossLaunches() {
         let store = Store(directory: directory)
         #expect(store.allowed().isEmpty)
-        store.allow(["a", "b"], at: date)
-        store.allow(["a"], at: date.addingTimeInterval(1))
-        #expect(Store(directory: directory).allowed() == ["a", "b"])
+        store.allow(["the velvet sundown", "atomship"], at: date)
+        store.allow(["the velvet sundown"], at: date.addingTimeInterval(1))
+        #expect(Store(directory: directory).allowed() == ["the velvet sundown", "atomship"])
     }
 
     @Test func savesReplacesAndChecksAList() {
         let store = Store(directory: directory)
         #expect(store.list(url: url) == nil)
-        let list = ListCache(names: ["a", "b"], etag: "e", changedAt: date, checkedAt: date)
+        let list = ListCache(names: ["atomship", "smokey september"], etag: "e", changedAt: date, checkedAt: date)
         store.save(list, url: url)
         #expect(Store(directory: directory).list(url: url) == list)
 
-        let smaller = ListCache(names: ["c"], etag: "f", changedAt: nil, checkedAt: date)
+        let smaller = ListCache(names: ["the velvet sundown"], etag: "f", changedAt: nil, checkedAt: date)
         store.save(smaller, url: url)
         store.markChecked(url: url, at: date.addingTimeInterval(60))
-        #expect(store.list(url: url) == ListCache(names: ["c"], etag: "f", checkedAt: date.addingTimeInterval(60)))
+        #expect(
+            store.list(url: url)
+                == ListCache(names: ["the velvet sundown"], etag: "f", checkedAt: date.addingTimeInterval(60)))
     }
 
     @Test func skipsASourceThatWasNeverChecked() throws {
@@ -48,15 +50,18 @@ struct StoreTests {
 
     @Test func enforcesTheSchema() throws {
         let store = Store(directory: directory)
-        store.save(ListCache(names: ["a"], checkedAt: date), url: url)
+        store.save(ListCache(names: ["atomship"], checkedAt: date), url: url)
         let queue = try #require(store.queue)
         #expect(throws: DatabaseError.self) {
             try queue.write {
-                try $0.execute(sql: "INSERT INTO decision (name, verdict, decidedAt) VALUES ('x', 'maybe', 'd')")
+                try $0.execute(
+                    sql: "INSERT INTO decision (name, verdict, decidedAt) VALUES ('the velvet sundown', 'maybe', 'd')")
             }
         }
         #expect(throws: DatabaseError.self) {
-            try queue.write { try $0.execute(sql: "INSERT INTO listedArtist (sourceId, name) VALUES (999, 'x')") }
+            try queue.write {
+                try $0.execute(sql: "INSERT INTO listedArtist (sourceId, name) VALUES (999, 'atomship')")
+            }
         }
         try queue.write { try $0.execute(sql: "DELETE FROM source") }
         #expect(try queue.read { try Int.fetchOne($0, sql: "SELECT count(*) FROM listedArtist") } == 0)
@@ -74,8 +79,8 @@ struct StoreTests {
         try Data().write(to: directory)
         let store = Store(directory: directory)
         #expect(store.failure != nil)
-        store.allow(["a"], at: date)
-        store.save(ListCache(names: ["a"], checkedAt: date), url: url)
+        store.allow(["the velvet sundown"], at: date)
+        store.save(ListCache(names: ["atomship"], checkedAt: date), url: url)
         #expect(store.allowed().isEmpty)
         #expect(store.list(url: url) == nil)
     }
@@ -83,7 +88,7 @@ struct StoreTests {
     @Test func reportsAFailedWrite() throws {
         let store = Store(directory: directory)
         try store.queue?.write { try $0.execute(sql: "DROP TABLE decision") }
-        store.allow(["a"], at: date)
+        store.allow(["the velvet sundown"], at: date)
         #expect(store.failure != nil)
     }
 }

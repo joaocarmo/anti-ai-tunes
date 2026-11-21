@@ -113,6 +113,8 @@ GRDB handles the database and migrations. Lists and decisions are cached in memo
 
 Every feature in the package ships with unit tests. CI fails below 100% line coverage. Faults such as a read-only directory, a non-zero exit or a timeout are injected, never waited for.
 
+Fixtures use real songs, with the artist, title and album as Apple Music shows them. The Velvet Sundown, "Dust on the Wind" (*Floating on Echoes*), is on the default list and plays the AI artist. System Of A Down, "Chop Suey!" (*Toxicity*), plays the human artist. A test never lists a real human artist as AI. When no real data fits, it uses a clearly fictional name, such as "Example AI Artist".
+
 ### Security
 
 The app is unsandboxed, because it sends Apple Events to Music.app. It declares `NSAppleEventsUsageDescription`[^6] and, with the hardened runtime, the `com.apple.security.automation.apple-events` entitlement.[^7] The transform command is the main risk, and invariant 8 covers it.
