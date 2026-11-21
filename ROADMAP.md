@@ -16,8 +16,8 @@ This file lists what comes next and in which order. It also records the product 
 | 1 | n/a | Spike on macOS 27.0.1 (see "Spike results") | Done |
 | 2 | n/a | Working model docs, this roadmap, the increment issue form | Done |
 | 3 | v0.1.0 | Walking skeleton: menu-bar app that shows the current artist and title. CI with the coverage gate. Signed releases. | Done |
-| 4 | v0.2.0 | Skip AI artists from the default list. "Skipped X (AI)" notification. | Next |
-| 5 | v0.3.0 | **Not AI** button: allow the artist and go back to the skipped song. | Planned |
+| 4 | v0.2.0 | Skip AI artists from the default list. "Skipped X (AI)" notification. | Done |
+| 5 | v0.3.0 | **Not AI** button: allow the artist and go back to the skipped song. | Next |
 | 6 | v0.4.0 | History of played songs. Best-effort dislike, with the result recorded. "Couldn't detect the artist" notification. Daily notification cap. | Planned |
 | 7 | v0.5.0 | Settings: action on match, delay, pause, launch at login, notification-style warning. | Planned |
 | 8 | v0.6.0 | Subscribed lists: add and edit lists, `lines` format, transform command. | Planned |

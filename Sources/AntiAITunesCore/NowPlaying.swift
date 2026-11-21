@@ -2,12 +2,16 @@
 public enum NowPlaying: Equatable, Sendable {
     /// Nothing heard yet since launch.
     case waiting
+    /// Music is stopped or not running.
     case notPlaying
+    /// A song is loaded, playing or paused.
     case track(Track, PlayerState)
 
-    /// Applies an update. Returns true when a different song starts, so callers can ignore repeats.
+    /// Applies an update and returns true when a different song starts.
+    ///
+    /// Callers use the result to ignore repeats.
     @discardableResult
-    public mutating func apply(_ event: PlayerEvent) -> Bool {
+    mutating func apply(_ event: PlayerEvent) -> Bool {
         switch event {
         case .track(let track, let state):
             let isNew = currentTrack?.key != track.key

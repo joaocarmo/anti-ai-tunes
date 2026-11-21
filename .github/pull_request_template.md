@@ -14,7 +14,8 @@ Closes #
 ## Checklist
 
 - [ ] `swift format lint --strict -r Sources Tests App Package.swift` passes
-- [ ] `swift test --enable-code-coverage` passes, with package line coverage at 100%
+- [ ] `swift test --enable-code-coverage -Xswiftc -warnings-as-errors` passes, with package line coverage at 100%
+- [ ] `swift test --sanitize=thread` and `swift test --sanitize=address` pass
 - [ ] `scripts/coverage.sh` and `scripts/bundle.sh` pass
 - [ ] `CHANGELOG.md` has an `Unreleased` entry (if users see the change)
 - [ ] `ARCHITECTURE.md` is updated (if an invariant or boundary changed)

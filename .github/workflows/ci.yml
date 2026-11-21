@@ -28,10 +28,16 @@ jobs:
         run: swift format lint --strict -r Sources Tests App Package.swift
 
       - name: Run tests
-        run: swift test --enable-code-coverage
+        run: swift test --enable-code-coverage -Xswiftc -warnings-as-errors
 
       - name: Check coverage
         run: scripts/coverage.sh
+
+      - name: Run tests with the thread sanitizer
+        run: swift test --sanitize=thread
+
+      - name: Run tests with the address sanitizer
+        run: swift test --sanitize=address
 
       - name: Build the universal app, as a release does
         run: ARCHS="arm64 x86_64" scripts/bundle.sh

@@ -2,7 +2,7 @@
 
 Anti-AI Tunes is a macOS menu-bar app. It skips AI-generated artists in the Music app (Apple Music). Stack: Swift, SwiftUI, SQLite through GRDB.
 
-Status: v0.1.0 in progress. The core package and a menu-bar app that shows the current song exist. ARCHITECTURE.md marks planned types.
+Status: v0.2.0 in progress. The menu-bar app shows the current song and skips songs by artists on the default AI list. ARCHITECTURE.md marks planned types.
 
 This file follows the AGENTS.md convention.[^1] Claude Code reads it directly, so the repo has no `CLAUDE.md`.[^2]
 
@@ -36,18 +36,23 @@ When the increment closes, plan the next one and open its issue. [CONTRIBUTING.m
 
 ```sh
 swift format lint --strict -r Sources Tests App Package.swift   # format check
-swift test --enable-code-coverage                               # tests
+swift test --enable-code-coverage -Xswiftc -warnings-as-errors  # tests, warnings fail the build
 scripts/coverage.sh                                             # 100% line coverage gate
+swift test --sanitize=thread                                    # data races
+swift test --sanitize=address                                   # memory errors
 scripts/bundle.sh                                               # build and sign the app (macOS only)
 ```
 
-The first 3 run on macOS and on Linux, where `Package.swift` leaves out the app target. In a Linux sandbox, check whether `swift` is on `PATH` and set `SWIFT_BACKTRACE=enable=no`. The app itself builds only on macOS, so CI (`.github/workflows/ci.yml`) is the final check. CI pins the newest toolchain: the `xcode-27` runner with Xcode 27.2. Change both workflows together. Run the same steps before you finish.
+All but `bundle.sh` run on macOS and on Linux, where `Package.swift` leaves out the app target. The app itself builds only on macOS, so CI (`.github/workflows/ci.yml`) is the final check. CI pins the newest toolchain: the `xcode-27` runner with Xcode 27.2. Change both workflows together. Run the same steps before you finish.
 
 ## Linux sandbox
 
 Agents often run in a Linux container without Xcode.
 
 - Install a Swift 6.4 toolchain for Linux from swift.org and verify its signature. If it fails with `libncurses.so.6` missing, extract the `libncurses6` package's libraries next to the toolchain (`usr/lib/swift/linux`). Set `SWIFT_BACKTRACE=enable=no`.
+- Put the toolchain on `PATH` by symlinking `swift`, `swift-format` and `sourcekit-lsp` into a directory already on it, such as `~/.local/bin`.
+- For code intelligence in Claude Code, install the `swift-lsp` plugin from `claude-plugins-official`. It needs `sourcekit-lsp` on `PATH`. Files in `App/` are not indexed on Linux.
+- On Linux, the address sanitizer also checks for leaks and reports some in the XCTest runner at exit. Run it with `ASAN_OPTIONS=detect_leaks=0`. macOS does not run this leak check.
 - The core package builds and tests there. The app target, `scripts/bundle.sh` and anything that talks to Music need macOS, so CI is the check for them.
 - The clone's `origin` may point to a local mirror. Push to a remote that points to GitHub.
 - `gh actions-lock` needs `gh extension install github/gh-actions-lock --pin v0.4.1`.
@@ -63,7 +68,7 @@ Agents often run in a Linux container without Xcode.
 - [ ] Attempt the dislike before `next track`. Never claim a dislike unless the read-back says `true`.
 - [ ] Downloaded list data reaches a transform command only on stdin. It never becomes part of a shell command.
 - [ ] All database access goes through `Store`.
-- [ ] All time goes through `Clock`. Tests never sleep.
+- [ ] All time goes through `TimeSource`. Tests never sleep.
 - [ ] No paid services, accounts or APIs.
 - [ ] No new dependency without a reason in the PR description.
 
