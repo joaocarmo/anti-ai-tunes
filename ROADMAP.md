@@ -19,11 +19,11 @@ This file lists what comes next and in which order. It also records the product 
 | 4 | v0.2.0 | Skip AI artists from the default list. "Skipped X (AI)" notification. | Done |
 | 5 | v0.3.0 | **Not AI** button: allow the artist and go back to the skipped song. | Next |
 | 6 | v0.4.0 | History of played songs. Best-effort dislike, with the result recorded. "Couldn't detect the artist" notification. Daily notification cap. | Planned |
-| 7 | v0.5.0 | Settings: action on match, delay, pause, launch at login, notification-style warning. | Planned |
+| 7 | v0.5.0 | Settings: action on match, delay, pause, launch at login, notification-style warning. The new views are checked with VoiceOver. | Planned |
 | 8 | v0.6.0 | Subscribed lists: add and edit lists, `lines` format, transform command. | Planned |
 | 9 | v0.7.0 | Manual control: mark as AI, report upstream, list of decisions. | Planned |
 | 10 | v0.8.0 | History archive. | Planned |
-| 11 | v0.9.0 | Polish: app icon, menu-bar icon, About panel with the version. Check for a newer release, with an off switch (no auto-update). | Planned |
+| 11 | v0.9.0 | Polish: app icon, menu-bar icon, About panel with the version. Check for a newer release, with an off switch (no auto-update). Localisation in British English (`en-GB`) and European Portuguese (`pt-PT`). | Planned |
 | 12 | v1.0.0 | Stable release, after v0.9.0 runs for a while with no open bugs. | Planned |
 | 13 | later | Experimental: "Suggest Less" through UI scripting, if macOS offers a reliable control. | Idea |
 
@@ -54,6 +54,7 @@ Increment 3 shipped as v0.1.1. The v0.1.0 release has no build attached (see CHA
 | Launch at login | `SMAppService.mainApp`, on by default, with a Settings toggle. |
 | Default list storage (v0.2.0) | A JSON cache file (`default-list.json`: names, ETag, change date and check date) until SQLite arrives in v0.3.0. |
 | Releases | Signed with one self-signed certificate. Not notarised. |
+| Localisation (v0.9.0) | `en-GB` (the development region) and `pt-PT`. The core keeps its strings in `.lproj` folders and reads them with `NSLocalizedString(_:bundle: .module, comment:)`, because `String(localized:)` is missing on Linux. The app bundle also gets `en-GB.lproj` and `pt-PT.lproj` folders with an `InfoPlist.strings` that translates `NSAppleEventsUsageDescription`. Those folders also tell macOS which languages the app supports. Without them, macOS shows the core's strings in English only. A probe on the CI runner showed: other English variants get `en-GB`, `pt-BR` and `pt` get `pt-PT`, and other languages get `en-GB`. |
 
 ## Spike results (macOS 27.0.1)
 
