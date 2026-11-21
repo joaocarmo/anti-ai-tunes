@@ -8,9 +8,15 @@ public struct MenuState: Equatable, Sendable {
     public let lines: [String]
     /// The AI list lines: the number of artists, when the list last changed and when the app last checked it.
     public let listDetails: [String]
+    /// The label of the **Not AI** item for the last skip, or nil when there is none.
+    public let notAI: String?
+    /// Why changes are not saved, or nil.
+    public let warning: String?
 
-    /// Creates the menu text for `nowPlaying` and `list`.
-    public init(nowPlaying: NowPlaying, list: ListCache? = nil) {
+    /// Creates the menu text for `nowPlaying`, `list`, the last skip and a store failure.
+    public init(nowPlaying: NowPlaying, list: ListCache? = nil, lastSkip: Skip? = nil, failure: String? = nil) {
+        notAI = lastSkip.map { "Not AI: \($0.artists)" }
+        warning = failure.map { "Changes are not saved: \($0)" }
         if let list {
             let changed = list.changedAt.map { ["Changed \(Self.text($0))"] } ?? []
             listDetails =

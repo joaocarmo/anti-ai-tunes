@@ -1,23 +1,14 @@
 import Foundation
 import Observation
 
-// shortcut: a JSON file holds the one default list; it moves into `Store` when the database arrives.
 /// The default list as last downloaded.
-public struct ListCache: Codable, Equatable, Sendable {
+public struct ListCache: Equatable, Sendable {
     var names: Set<String>
     var etag: String?
     /// When a download last brought different names.
-    ///
-    /// Nil in caches written before this was recorded.
     var changedAt: Date?
     /// When the list host last answered.
     var checkedAt: Date
-
-    // The check date keeps its first JSON key, so older caches still load.
-    enum CodingKeys: String, CodingKey {
-        case names, etag, changedAt
-        case checkedAt = "fetchedAt"
-    }
 }
 
 /// Keeps the default AI-artist list fresh.
@@ -34,16 +25,16 @@ public final class ListRefresher {
     public private(set) var list: ListCache?
     /// Called after a download replaces the list.
     @ObservationIgnored public var onChange: @MainActor () -> Void = {}
-    private let file: URL
+    private let store: Store
     private let http: any HTTPClient
     private let clock: any TimeSource
 
-    /// Creates a refresher that keeps its cache in `directory`, and loads the cached list if there is one.
-    public init(directory: URL, http: any HTTPClient, clock: any TimeSource) {
-        file = directory.appendingPathComponent("default-list.json")
+    /// Creates a refresher that keeps the list in `store`, and loads the stored list if there is one.
+    public init(store: Store, http: any HTTPClient, clock: any TimeSource) {
+        self.store = store
         self.http = http
         self.clock = clock
-        list = try? JSONDecoder().decode(ListCache.self, from: Data(contentsOf: file))
+        list = store.list(url: Self.url)
     }
 
     /// The listed artist names, or an empty set before the first download.
@@ -54,22 +45,22 @@ public final class ListRefresher {
         switch response.status {
         case 304:
             list?.checkedAt = clock.now
+            store.markChecked(url: Self.url, at: clock.now)
         case 200:
             let text = String(decoding: response.body, as: UTF8.self)
             // A list that lost more than half its names is more likely broken than cleaned up.
             guard let parsed = CSVNames.parse(text, column: "artist").map(Set.init), !parsed.isEmpty,
                 parsed.count * 2 >= names.count
             else { return }
-            list = ListCache(
+            let new = ListCache(
                 names: parsed, etag: response.etag, changedAt: parsed == names ? list?.changedAt : clock.now,
                 checkedAt: clock.now)
+            list = new
+            store.save(new, url: Self.url)
             onChange()
         default:
             return
         }
-        try? FileManager.default.createDirectory(
-            at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try? JSONEncoder().encode(list).write(to: file, options: .atomic)
     }
 
     /// Refreshes now and then every 24 hours, until the clock's sleep throws.

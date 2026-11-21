@@ -2,7 +2,7 @@
 
 Anti-AI Tunes is a macOS menu-bar app. It skips AI-generated artists in the Music app (Apple Music). Stack: Swift, SwiftUI, SQLite through GRDB.
 
-Status: v0.2.0 in progress. The menu-bar app shows the current song and skips songs by artists on the default AI list. ARCHITECTURE.md marks planned types.
+Status: v0.3.0 in progress. The menu-bar app shows the current song, skips songs by artists on the default AI list, and undoes a skip with **Not AI**. ARCHITECTURE.md marks planned types.
 
 This file follows the AGENTS.md convention.[^1] Claude Code reads it directly, so the repo has no `CLAUDE.md`.[^2]
 
@@ -50,6 +50,7 @@ All but `bundle.sh` run on macOS and on Linux, where `Package.swift` leaves out 
 Agents often run in a Linux container without Xcode.
 
 - Install a Swift 6.4 toolchain for Linux from swift.org and verify its signature. If it fails with `libncurses.so.6` missing, extract the `libncurses6` package's libraries next to the toolchain (`usr/lib/swift/linux`). Set `SWIFT_BACKTRACE=enable=no`.
+- GRDB needs the SQLite headers, and the container may have only `libsqlite3.so.0`. Without root, run `apt-get download libsqlite3-dev` and extract it with `dpkg -x`. Copy `sqlite3.h` and `sqlite3ext.h` into the toolchain's `usr/lib/clang/<version>/include`, and link `libsqlite3.so` to the system `libsqlite3.so.0` in `usr/lib/swift/linux`. The toolchain searches both folders by default, so no build flags are needed.
 - Put the toolchain on `PATH` by symlinking `swift`, `swift-format` and `sourcekit-lsp` into a directory already on it, such as `~/.local/bin`.
 - For code intelligence in Claude Code, install the `swift-lsp` plugin from `claude-plugins-official`. It needs `sourcekit-lsp` on `PATH`. Files in `App/` are not indexed on Linux.
 - On Linux, the address sanitizer also checks for leaks and reports some in the XCTest runner at exit. Run it with `ASAN_OPTIONS=detect_leaks=0`. macOS does not run this leak check.

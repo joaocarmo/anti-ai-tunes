@@ -2,7 +2,7 @@
 
 This file describes how Anti-AI Tunes is built and the rules the code must follow. It follows the ARCHITECTURE.md format: a short map of the code plus the rules that rarely change.[^1] Find code with symbol search. This file names types but does not link to them, because links go stale.
 
-Status: v0.2.0 in progress. Types marked *(planned)* do not exist yet. The rest is in the code. Update this file when an invariant or a boundary changes.
+Status: v0.3.0 in progress. Types marked *(planned)* do not exist yet. The rest is in the code. Update this file when an invariant or a boundary changes.
 
 ## Bird's-eye view
 
@@ -28,15 +28,16 @@ All logic lives here. It has no UI code.
 
 - `Normalizer`: case-folds, strips diacritics, trims and collapses whitespace. Keeps dots.
 - `Track.artistParts()`: normalises the artist and splits it on `, `, ` & `, ` x `, ` feat. ` and ` ft. `. Also reads `(feat. X)` and `(ft. X)` from the title.
-- `Verdict`: the parts that are on the list. Decisions join it in v0.3.0.
+- `Verdict`: the parts that are on the list and not allowed by a decision.
 - `PlayerEvent` and `Track`: parse the `playerInfo` dictionary and the launch read. A message without `Name` is a state-only event. `Track.key` joins the normalised `Name`, `Artist` and `Album`, because streamed songs carry no persistent ID.
 - `NowPlaying`: applies events to the current state and reports when a different song starts, so repeats count once.
-- `MatchCoordinator`: the core flow. It owns `NowPlaying` and checks each song once, the first time it plays. On a match, it skips and notifies. It acts in the same main-actor turn as the matching `playerInfo`, so the key is still the latest (invariant 6). A delay before acting must compare the key again. It sends Apple Events only while `MusicControlling.isRunning` is true. Later it also handles the delay before acting, the track-key check and the dislike attempt. It also writes history rows, applies the daily notification cap and runs the **Not AI** undo. Undo sends `previous track`, waits up to 1 second for the skipped song, and sends it once more if needed. The first call may only restart the current song.
+- `MatchCoordinator`: the core flow. It owns `NowPlaying` and checks each song once, the first time it plays. On a match, it skips and notifies. It acts in the same main-actor turn as the matching `playerInfo`, so the key is still the latest (invariant 6). A delay before acting must compare the key again. It sends Apple Events only while `MusicControlling.isRunning` is true. **Not AI** allows every matched part. For the most recent skip, and only while the song after it plays, it also sends `previous track`, waits 1 second, and sends it once more if the skipped song is not back. The first call may only restart the current song. Later it also handles the delay before acting, the track-key check, the dislike attempt, history rows and the daily notification cap.
+- `Skip`: the track key, matched parts and display names of a skip, and the notification payload that brings them back to **Not AI**, even after a relaunch.
 - `CSVNames`: parses a `csv` body (RFC 4180) and returns the normalised names in a named column. Drops names with fewer than 2 letters or digits. The `lines` format comes with subscribed lists.
 - `TransformRunner` *(planned)*: runs an optional local command. The downloaded body goes in on stdin, and names come out on stdout.
 - `SourceRefresher` *(planned)*: downloads each subscribed list with `If-None-Match`. It replaces that list's rows in one transaction.
-- `ListRefresher` and `ListCache`: download the default list with `If-None-Match` at launch and every 24 hours, with a 10 MB cap. They keep it in `default-list.json`, with the time the names last changed and the time the host last answered. Any failure keeps the cached list. `SourceRefresher` and `Store` replace them.
-- `Store` *(planned)*: the GRDB database, its migrations and all queries.
+- `ListRefresher` and `ListCache`: download the default list with `If-None-Match` at launch and every 24 hours, with a 10 MB cap. They keep it in `Store`, with the time the names last changed and the time the host last answered. Any failure keeps the stored list. `SourceRefresher` replaces `ListRefresher`.
+- `Store`: the GRDB database (`db.sqlite`), its migrations and all queries. If the file cannot open, it saves nothing, and the menu says that changes are not saved.
 - `Archiver` *(planned)*: moves history rows beyond the newest N into the archive database.
 - `MenuState`: the view model. Views only render it.
 - Ports: `MusicControlling`, `Notifying`, `TimeSource` and `HTTPClient`. These protocols are the only way the package reaches the system. `HTTPBody.collect` enforces the response size cap for the `HTTPClient` adapter. `MusicControlling.dislikeCurrentTrack()` *(planned)* returns `.accepted`, `.ignored` or `.failed`, so a better dislike method later changes only the adapter.
@@ -45,20 +46,28 @@ All logic lives here. It has no UI code.
 
 Thin adapters and views. The folder is excluded from coverage as a whole. `Package.swift` adds this target only on macOS, so the core package also builds and tests on Linux. There is no Xcode project: `scripts/bundle.sh` assembles and signs `AntiAITunes.app` from the binary, `Support/Info.plist` and `Support/AntiAITunes.entitlements`.
 
-- `AntiAITunesApp`: the `MenuBarExtra` and, later, the Settings scene. `AppModel` wires the adapters into the package.
+- `AntiAITunesApp`: the `MenuBarExtra` and, later, the Settings scene. `AppModel` wires the adapters into the package. The menu also offers **Not AI** for the last skip, because notification banners disappear on a timer.[^10]
 - `MusicObserverAdapter`: subscribes to `com.apple.Music.playerInfo` through `DistributedNotificationCenter`.
 - `MusicControllerAdapter`: implements `MusicControlling` with pre-compiled `NSAppleScript`. It also reads the current song at launch.
-- `NotifierAdapter`: implements `Notifying` with `UNUserNotificationCenter`. It asks for permission at launch.
+- `NotifierAdapter`: implements `Notifying` with `UNUserNotificationCenter`. It asks for permission at launch. As the notification delegate, it registers the **Not AI** action, shows notifications while the app is in front, and forwards the action. `AppModel` creates it in `App.init`, because Apple requires the delegate before the app finishes launching.[^9]
 - `URLSessionHTTPClient` and `SystemClock`: implement `HTTPClient` and `TimeSource`.
 - Views: menu, settings, sources and decisions. The launch-at-login toggle binds `SMAppService.mainApp` directly.[^2]
 
 ### Data
 
-- `db.sqlite`: lists (`source`, `listed_artist`), decisions (`decision`), history (`play`) and daily notification counts (`notification_count`).
-- `history-archive.sqlite`: older `play` rows, same schema.
-- `default-list.json`: the default list until `db.sqlite` arrives in v0.3.0.
+- `db.sqlite`: lists (`source`, `listedArtist`) and decisions (`decision`). History (`play`) and daily notification counts (`notificationCount`) arrive in v0.4.0.
+- `history-archive.sqlite` *(planned)*: older `play` rows, same schema.
 
-All files live in `~/Library/Application Support/AntiAITunes/`.
+All files live in `~/Library/Application Support/AntiAITunes/`. Versions before 0.3.0 kept the default list in `default-list.json`. `Store` deletes that file.
+
+Schema conventions:
+
+1. Table and column names are English, singular and camelCase. Every table has an explicit primary key. A single-column key is an `INTEGER PRIMARY KEY` named `id`.[^11]
+2. Unique values have a unique index. Relations use foreign keys, and child keys are indexed.[^11][^12]
+3. Every table is `STRICT`.[^13] Closed value sets use `CHECK (x IN (…))`, listing only values the roadmap names.
+4. Dates are UTC `TEXT` in GRDB's format, `YYYY-MM-DD HH:MM:SS.SSS`. Names are stored normalised, so comparisons are binary.
+5. `WITHOUT ROWID` only for composite keys with small rows.[^14]
+6. Migrations are SQL strings that never use app types. A shipped migration never changes. Later needs add tables, columns or indexes.[^15]
 
 ## Invariants
 
@@ -98,7 +107,7 @@ All timers, delays and dates come from `TimeSource`. The notification cap counts
 
 ### Persistence
 
-GRDB handles the database and migrations. Lists and decisions are cached in memory, as a `Set` and a `Dictionary`, and reloaded after every write. History keeps the newest N rows (1,000 by default). Older rows move to the archive in one transaction.
+GRDB handles the database and migrations. Lists and decisions are cached in memory as sets, and updated with every write. History keeps the newest N rows (1,000 by default). Older rows move to the archive in one transaction.
 
 ### Testing
 
@@ -124,3 +133,10 @@ The `playerInfo` keys are undocumented. `PlayerEvent` is the only place that rea
 [^6]: Apple Developer Documentation, `NSAppleEventsUsageDescription`. <https://developer.apple.com/documentation/bundleresources/information-property-list/nsappleeventsusagedescription>
 [^7]: Apple Developer Documentation, `com.apple.security.automation.apple-events`. <https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.security.automation.apple-events>
 [^8]: Barkeep, "Why macOS permissions vanish every time you rebuild your app". <https://barkeepmac.com/macos-permissions-lost-after-rebuild.html>
+[^9]: Apple Developer Documentation, `UNUserNotificationCenterDelegate`. <https://developer.apple.com/documentation/usernotifications/unusernotificationcenterdelegate>
+[^10]: Apple Human Interface Guidelines, "Accessibility", section "Cognitive": "Minimize use of time-boxed interface elements." <https://developer.apple.com/design/human-interface-guidelines/accessibility>
+[^11]: GRDB, "Database Schema Recommendations". <https://github.com/groue/GRDB.swift/blob/master/GRDB/Documentation.docc/DatabaseSchemaRecommendations.md>
+[^12]: SQLite, "SQLite Foreign Key Support", section "Required and Suggested Database Indexes". <https://www.sqlite.org/foreignkeys.html>
+[^13]: SQLite, "STRICT Tables". <https://www.sqlite.org/stricttables.html>
+[^14]: SQLite, "The WITHOUT ROWID Optimization", section "When To Use WITHOUT ROWID". <https://www.sqlite.org/withoutrowid.html>
+[^15]: GRDB, "Migrations", section "Good Practices for Defining Migrations". <https://github.com/groue/GRDB.swift/blob/master/GRDB/Documentation.docc/Migrations.md>

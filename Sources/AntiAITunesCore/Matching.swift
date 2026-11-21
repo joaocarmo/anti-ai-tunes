@@ -18,13 +18,13 @@ extension Track {
     }
 }
 
-/// The parts of an artist credit that are on the list.
+/// The parts of an artist credit that are on the list and not allowed.
 struct Verdict: Equatable, Sendable {
     let matched: [String]
 
     var isMatch: Bool { !matched.isEmpty }
 
-    init(parts: [String], listed: Set<String>) {
-        matched = parts.filter(listed.contains)
+    init(parts: [String], listed: Set<String>, allowed: Set<String> = []) {
+        matched = parts.filter { listed.contains($0) && !allowed.contains($0) }
     }
 }

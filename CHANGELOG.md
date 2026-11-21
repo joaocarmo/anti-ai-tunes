@@ -6,6 +6,14 @@ The format is based on Keep a Changelog 1.1.0.[^1] This project follows Semantic
 
 ## [Unreleased]
 
+### Added
+
+- **Not AI** in the skip notification and in the menu: allows the artist and goes back to the skipped song.
+
+### Changed
+
+- The AI list is stored in a database. The app downloads it again once after the update.
+
 ## [0.2.1] - 2026-11-21
 
 ### Changed

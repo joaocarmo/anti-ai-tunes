@@ -11,13 +11,15 @@ public protocol MusicControlling {
     func currentTrackFields() -> [String]?
     /// Skips to the next song.
     func nextTrack()
+    /// Goes back to the previous song, or to the start of the current one if it has played for a few seconds.
+    func previousTrack()
 }
 
 /// Shows notifications to the user.
 @MainActor
 public protocol Notifying {
-    /// Shows a notification with `title` and `body`.
-    func post(title: String, body: String)
+    /// Shows a notification with `title` and `body`, and a **Not AI** action for `skip`.
+    func post(title: String, body: String, skip: Skip)
 }
 
 /// The only source of time, so tests never sleep.
