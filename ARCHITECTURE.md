@@ -12,7 +12,7 @@ On a match, the app runs the configured action through Apple Events. The default
 
 ```text
 Music.app --playerInfo--> MusicObserverAdapter --PlayerEvent--> MatchCoordinator
-                                                                   |-- Verdict (ArtistParts, listed artists, decisions)
+                                                                   |-- Verdict (Track.artistParts(), listed artists, decisions)
                                                                    |-- MusicControlling --Apple Events--> Music.app
                                                                    |-- Notifying --> notification with "Not AI"
                                                                    '-- Store --> SQLite (history, decisions)
@@ -27,7 +27,7 @@ SourceRefresher --HTTP + ETag--> [TransformRunner] --> SourceParser --> Store (l
 All logic lives here. It has no UI code.
 
 - `Normalizer`: case-folds, strips diacritics, trims and collapses whitespace. Keeps dots.
-- `ArtistParts`: normalises an artist string and splits it on `, `, ` & `, ` x `, ` feat. ` and ` ft. `. Also reads `(feat. X)` and `(ft. X)` from the title.
+- `Track.artistParts()`: normalises the artist and splits it on `, `, ` & `, ` x `, ` feat. ` and ` ft. `. Also reads `(feat. X)` and `(ft. X)` from the title.
 - `Verdict`: the parts that are on the list. Decisions join it in v0.3.0.
 - `PlayerEvent` and `Track`: parse the `playerInfo` dictionary and the launch read. A message without `Name` is a state-only event. `Track.key` joins the normalised `Name`, `Artist` and `Album`, because streamed songs carry no persistent ID.
 - `NowPlaying`: applies events to the current state and reports when a different song starts, so repeats count once.
@@ -39,7 +39,7 @@ All logic lives here. It has no UI code.
 - `Store` *(planned)*: the GRDB database, its migrations and all queries.
 - `Archiver` *(planned)*: moves history rows beyond the newest N into the archive database.
 - `MenuState`: the view model. Views only render it.
-- Ports: `MusicControlling`, `Notifying`, `Clock` and `HTTPClient`. These protocols are the only way the package reaches the system. `HTTPBody.collect` enforces the response size cap for the `HTTPClient` adapter. `MusicControlling.dislikeCurrentTrack()` *(planned)* returns `.accepted`, `.ignored` or `.failed`, so a better dislike method later changes only the adapter.
+- Ports: `MusicControlling`, `Notifying`, `TimeSource` and `HTTPClient`. These protocols are the only way the package reaches the system. `HTTPBody.collect` enforces the response size cap for the `HTTPClient` adapter. `MusicControlling.dislikeCurrentTrack()` *(planned)* returns `.accepted`, `.ignored` or `.failed`, so a better dislike method later changes only the adapter.
 
 ### `App/` (SwiftPM executable target `AntiAITunes`)
 
@@ -49,7 +49,7 @@ Thin adapters and views. The folder is excluded from coverage as a whole. `Packa
 - `MusicObserverAdapter`: subscribes to `com.apple.Music.playerInfo` through `DistributedNotificationCenter`.
 - `MusicControllerAdapter`: implements `MusicControlling` with pre-compiled `NSAppleScript`. It also reads the current song at launch.
 - `NotifierAdapter`: implements `Notifying` with `UNUserNotificationCenter`. It asks for permission at launch.
-- `URLSessionHTTPClient` and `SystemClock`: implement `HTTPClient` and `Clock`.
+- `URLSessionHTTPClient` and `SystemClock`: implement `HTTPClient` and `TimeSource`.
 - Views: menu, settings, sources and decisions. The launch-at-login toggle binds `SMAppService.mainApp` directly.[^2]
 
 ### Data
@@ -74,13 +74,13 @@ MUST and MUST NOT have the meaning given in BCP 14 (RFC 2119 and RFC 8174).[^3][
 8. Downloaded list data MUST reach a transform command only on stdin. It MUST NOT become part of a command string or argument.
 9. A failed refresh, transform or archive MUST NOT delete existing data.
 10. Code outside `Store` MUST NOT touch the database. Code outside `SourceRefresher` (today `ListRefresher`) MUST NOT touch the network. Code outside `TransformRunner` MUST NOT start processes.
-11. Time MUST come from `Clock`. Tests MUST NOT sleep.
+11. Time MUST come from `TimeSource`. Tests MUST NOT sleep.
 12. A shipped migration MUST NOT change. Schema changes add a new migration.
 13. The app MUST NOT use paid services, accounts or APIs.
 
 ## Boundaries
 
-- **Package and system.** The package reaches the system only through `MusicControlling`, `Notifying`, `Clock` and `HTTPClient`. Tests use hand-written fakes that log every call to one shared event log, so a test can check call order.
+- **Package and system.** The package reaches the system only through `MusicControlling`, `Notifying`, `TimeSource` and `HTTPClient`. Tests use hand-written fakes that log every call to one shared event log, so a test can check call order.
 - **Package and database.** `Store` owns the schema and every query. Other types get plain values.
 - **Package and network.** `SourceRefresher` (today `ListRefresher`) is the only network client. It sends `If-None-Match` and treats `304` as "no change".
 - **Package and shell.** `TransformRunner` runs `/bin/zsh -c <command>` with a 30-second timeout and an output cap. The command comes from local settings only, never from a list.
@@ -94,7 +94,7 @@ Apple Event failures are best-effort. They are logged in the `play` row's `error
 
 ### Time
 
-All timers, delays and dates come from `Clock`. The notification cap counts per local calendar day.
+All timers, delays and dates come from `TimeSource`. The notification cap counts per local calendar day.
 
 ### Persistence
 

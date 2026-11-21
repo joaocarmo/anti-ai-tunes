@@ -92,7 +92,12 @@ CI runs the same checks on every pull request. The `main` ruleset requires its 2
 
 - Follow the Swift API Design Guidelines. Their first rule is clarity at the point of use.[^4]
 - `swift format` decides layout. Its settings are in `.swift-format`.[^1]
-- A comment explains why, never what. Leave ticket numbers and dates out of code.
+- Mark `public` only what `App/` uses. Everything else keeps the default, `internal`.[^11]
+- Every `public` declaration has a doc comment. It starts with a one-sentence summary: an initializer "Creates…", a function says what it does or returns, anything else says what it is. `swift format lint` checks both rules.[^4]
+- Other comments explain why, never what. Leave ticket numbers and dates out of code.
+- Name things by their role, so the call site reads clearly. Use a method or property when the call has an obvious `self`. Otherwise, use a function in a caseless `enum`.[^4]
+- Name Booleans as assertions, such as `isMatch`. Name methods without side effects as nouns or with `-ed`/`-ing`, such as `sorted()`. Avoid abbreviations.[^4]
+- State can change across `await`. Keep each read-modify-write between 2 `await`s.[^12]
 - Code, identifiers and code comments use American English.
 
 ## Writing style
@@ -157,3 +162,5 @@ Releases are signed with one self-signed certificate, so macOS keeps user permis
 [^8]: Claude Code docs, "How Claude remembers your project", section "AGENTS.md". <https://code.claude.com/docs/en/memory>
 [^9]: Semantic Versioning 2.0.0. <https://semver.org/spec/v2.0.0.html>
 [^10]: GitHub Docs, "Immutable releases". <https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/immutable-releases>
+[^11]: The Swift Programming Language, "Access Control", section "Access Levels for Frameworks". <https://docs.swift.org/swift-book/documentation/the-swift-programming-language/accesscontrol/>
+[^12]: Swift Migration Guide, "Data Race Safety", section "Atomicity". <https://www.swift.org/migration/documentation/swift-6-concurrency-migration-guide/dataracesafety/>

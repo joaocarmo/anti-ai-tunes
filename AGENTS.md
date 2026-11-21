@@ -68,7 +68,7 @@ Agents often run in a Linux container without Xcode.
 - [ ] Attempt the dislike before `next track`. Never claim a dislike unless the read-back says `true`.
 - [ ] Downloaded list data reaches a transform command only on stdin. It never becomes part of a shell command.
 - [ ] All database access goes through `Store`.
-- [ ] All time goes through `Clock`. Tests never sleep.
+- [ ] All time goes through `TimeSource`. Tests never sleep.
 - [ ] No paid services, accounts or APIs.
 - [ ] No new dependency without a reason in the PR description.
 
