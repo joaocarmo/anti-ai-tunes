@@ -2,7 +2,7 @@
 
 Anti-AI Tunes is a small menu-bar app for the Mac. It watches what plays in the Music app. If the artist is on a list of AI-generated artists, it skips the song. It also asks Apple Music to suggest less like it, where macOS allows this.
 
-> **Status: early.** Version 0.2.0 skips songs by artists on the default AI list. Undo (**Not AI**) arrives in 0.3.0. Until then, to hear a song it skipped by mistake, quit Anti-AI Tunes from its menu. This README describes the planned app. [ROADMAP.md](ROADMAP.md) lists what is done and what comes next.
+> **Status: early.** Version 0.3.0 skips songs by artists on the default AI list. **Not AI**, in the notification or the menu, allows the artist and goes back to the song. This README describes the planned app. [ROADMAP.md](ROADMAP.md) lists what is done and what comes next.
 
 ## Why
 
@@ -35,7 +35,7 @@ xattr -dr com.apple.quarantine /Applications/AntiAITunes.app
 - The Music app announces every new song. Anti-AI Tunes reads the artist from that announcement.
 - It checks the artist against the lists you subscribe to. Lists update once a day.
 - On a match, it skips the song. It also tries to mark the song as "Suggest Less". You can change the action in Settings.
-- A notification tells you what happened. Click **Not AI** to undo it and allow the artist from then on.
+- A notification tells you what happened. Click **Not AI** to undo it and allow the artist from then on. The menu offers **Not AI** for the last skip too.
 
 ## Privacy
 

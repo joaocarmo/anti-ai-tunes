@@ -17,8 +17,8 @@ This file lists what comes next and in which order. It also records the product 
 | 2 | n/a | Working model docs, this roadmap, the increment issue form | Done |
 | 3 | v0.1.0 | Walking skeleton: menu-bar app that shows the current artist and title. CI with the coverage gate. Signed releases. | Done |
 | 4 | v0.2.0 | Skip AI artists from the default list. "Skipped X (AI)" notification. | Done |
-| 5 | v0.3.0 | **Not AI** button: allow the artist and go back to the skipped song. | Next |
-| 6 | v0.4.0 | History of played songs. Best-effort dislike, with the result recorded. "Couldn't detect the artist" notification. Daily notification cap. | Planned |
+| 5 | v0.3.0 | **Not AI** button: allow the artist and go back to the skipped song. | Done |
+| 6 | v0.4.0 | History of played songs. Best-effort dislike, with the result recorded. "Couldn't detect the artist" notification. Daily notification cap. | Next |
 | 7 | v0.5.0 | Settings: action on match, delay, pause, launch at login, notification-style warning. The new views are checked with VoiceOver. | Planned |
 | 8 | v0.6.0 | Subscribed lists: add and edit lists, `lines` format, transform command. | Planned |
 | 9 | v0.7.0 | Manual control: mark as AI, report upstream, list of decisions. | Planned |
@@ -40,7 +40,7 @@ Increment 3 shipped as v0.1.1. The v0.1.0 release has no build attached (see CHA
 | Verdict | An `allow` decision excludes that part. A `skip` decision or a listed name triggers the action. |
 | Action on match | `skip` (default), `pause` or `nothing`, after a delay of 0 to 60 seconds (default 0). A track change or **Not AI** cancels a pending action. The app acts only while the track key still matches. |
 | Dislike | Best-effort, before every skip. The app sets `disliked`, reads it back and records the result. It never claims a dislike that did not stick. All of it sits behind `MusicControlling.dislikeCurrentTrack()`, so a better method later changes only the adapter. |
-| Undo (**Not AI**) | Store `allow` for each matched part. Go back with `previous track`. Wait up to 1 second for the skipped song. If it is not playing, send `previous track` once more. Stop after 2 calls. Clear the dislike only if it stuck. |
+| Undo (**Not AI**) | Store `allow` for each matched part. Go back with `previous track`. Wait up to 1 second for the skipped song. If it is not playing, send `previous track` once more. Stop after 2 calls. The app waits a fixed 1 second. It goes back only for the most recent skip, while the song after it plays. An older skip is only allowed. **Not AI** is in the notification and the menu, because banners disappear on a timer. Clear the dislike only if it stuck. |
 | No artist | A song with a name but no artist gets 1 notification: "Couldn't detect the artist for <name>". |
 | Notification cap | After N notifications (default 3) for the same key on one day, the app acts silently. 0 means no cap. Counts reset at local midnight and when a decision changes. |
 | Lists | Subscriptions with a URL and a format (`csv` with a column, or `lines`). An optional local transform command reads the download on stdin. Refresh at launch, every 24 hours and on demand, with ETag. Default list: CennoxX `SpotifyAiArtists.csv`. |
@@ -52,7 +52,7 @@ Increment 3 shipped as v0.1.1. The v0.1.0 release has no build attached (see CHA
 | Notification settings | At launch and when the app becomes active, it reads `UNNotificationSettings`. If notifications are off or `alertStyle` is not `.alert`, the menu shows a warning with a button to `x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=<bundle id>` (fallback: `com.apple.preference.notifications?id=<bundle id>`). |
 | Transform command | Local settings only, never from a list. Runs `/bin/zsh -c <command>` with the download on stdin and expects 1 name per line. 30-second timeout and an output cap. On failure the previous rows stay. |
 | Launch at login | `SMAppService.mainApp`, on by default, with a Settings toggle. |
-| Default list storage (v0.2.0) | A JSON cache file (`default-list.json`: names, ETag, change date and check date) until SQLite arrives in v0.3.0. |
+| Default list storage | v0.2.x used a JSON cache file (`default-list.json`). From v0.3.0 the list lives in `db.sqlite`, and the old file is deleted. |
 | Releases | Signed with one self-signed certificate. Not notarised. |
 | Localisation (v0.9.0) | `en-GB` (the development region) and `pt-PT`. The core keeps its strings in `.lproj` folders and reads them with `NSLocalizedString(_:bundle: .module, comment:)`, because `String(localized:)` is missing on Linux. The app bundle also gets `en-GB.lproj` and `pt-PT.lproj` folders with an `InfoPlist.strings` that translates `NSAppleEventsUsageDescription`. Those folders also tell macOS which languages the app supports. Without them, macOS shows the core's strings in English only. A probe on the CI runner showed: other English variants get `en-GB`, `pt-BR` and `pt` get `pt-PT`, and other languages get `en-GB`. |
 
