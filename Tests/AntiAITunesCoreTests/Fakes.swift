@@ -28,9 +28,11 @@ struct FakeNotifier: Notifying {
     func post(title: String, body: String) { log.events.append("post \(title) | \(body)") }
 }
 
-/// Sleeps return at once. After `sleepsLeft` sleeps, the next one throws.
+/// A time source whose sleeps return at once.
+///
+/// After `sleepsLeft` sleeps, the next one throws.
 @MainActor
-final class FakeClock: Clock {
+final class FakeClock: TimeSource {
     let log: EventLog
     var now = Date(timeIntervalSince1970: 1_800_000_000)
     var sleepsLeft = 0

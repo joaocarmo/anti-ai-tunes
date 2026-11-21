@@ -5,12 +5,14 @@ import Observation
 @MainActor
 @Observable
 public final class MatchCoordinator {
+    /// What the Music app is doing.
     public private(set) var nowPlaying = NowPlaying.waiting
     @ObservationIgnored private var checkedKey: String?
     private let music: any MusicControlling
     private let notifier: any Notifying
     private let listed: @MainActor () -> Set<String>
 
+    /// Creates a coordinator that skips songs by the artists that `listed` returns.
     public init(music: any MusicControlling, notifier: any Notifying, listed: @escaping @MainActor () -> Set<String>) {
         self.music = music
         self.notifier = notifier
@@ -24,7 +26,9 @@ public final class MatchCoordinator {
         handle(event)
     }
 
-    /// Applies an update. Checks each song once, the first time it plays.
+    /// Applies an update from the Music app.
+    ///
+    /// Checks each song once, the first time it plays.
     public func handle(_ event: PlayerEvent) {
         if nowPlaying.apply(event) { checkedKey = nil }
         check()
@@ -41,7 +45,7 @@ public final class MatchCoordinator {
         // An empty list has not loaded yet. `recheck()` runs when it arrives.
         guard case .track(let track, .playing) = nowPlaying, track.key != checkedKey, !listed.isEmpty else { return }
         checkedKey = track.key
-        let verdict = Verdict(parts: ArtistParts.parts(artist: track.artist, title: track.name), listed: listed)
+        let verdict = Verdict(parts: track.artistParts(), listed: listed)
         // This runs in the same main-actor turn as the `playerInfo` that matched, so the key is still the latest.
         // A delay before acting must compare the key again.
         guard verdict.isMatch, music.isRunning else { return }

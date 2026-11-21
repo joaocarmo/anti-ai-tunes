@@ -15,18 +15,16 @@ public enum PlayerState: Equatable, Sendable {
 
 /// A song as the Music app describes it.
 public struct Track: Equatable, Sendable {
-    public let name: String
-    public let artist: String
-    public let album: String
+    let name: String
+    let artist: String
+    let album: String
 
-    public init(name: String, artist: String, album: String) {
-        self.name = name
-        self.artist = artist
-        self.album = album
-    }
-
-    /// Identifies a song across repeated notifications. Streamed songs carry no persistent ID.
-    public var key: String {
+    /// Identifies a song across repeated notifications.
+    ///
+    /// Streamed songs carry no persistent ID.
+    ///
+    /// - Complexity: O(n) in the length of the name, artist and album.
+    var key: String {
         [name, artist, album].map(Normalizer.normalize).joined(separator: "\u{1F}")
     }
 }
@@ -38,7 +36,9 @@ public enum PlayerEvent: Equatable, Sendable {
     /// A message with only the playback state.
     case state(PlayerState)
 
-    /// Parses a `com.apple.Music.playerInfo` notification. Returns nil when it holds neither a song nor a state.
+    /// Creates an event from a `com.apple.Music.playerInfo` notification.
+    ///
+    /// Returns nil when the notification holds neither a song nor a state.
     public init?(userInfo: [AnyHashable: Any]) {
         self.init(
             name: userInfo["Name"] as? String,
@@ -48,7 +48,7 @@ public enum PlayerEvent: Equatable, Sendable {
         )
     }
 
-    /// Parses the result of the launch read: player state, name, artist and album, in that order.
+    /// Creates an event from the launch read: player state, name, artist and album, in that order.
     public init?(snapshot fields: [String]) {
         guard fields.count == 4 else { return nil }
         self.init(name: fields[1], artist: fields[2], album: fields[3], state: PlayerState(text: fields[0]))

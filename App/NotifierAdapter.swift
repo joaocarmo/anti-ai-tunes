@@ -4,7 +4,9 @@ import UserNotifications
 /// Posts notifications through the system notification center.
 @MainActor
 struct NotifierAdapter: Notifying {
-    /// Asks for permission. Without it, posts are dropped and skipping still works.
+    /// Creates a notifier and asks for permission.
+    ///
+    /// Without permission, posts are dropped and skipping still works.
     init() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }

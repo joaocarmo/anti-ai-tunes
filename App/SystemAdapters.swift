@@ -15,9 +15,9 @@ struct URLSessionHTTPClient: HTTPClient {
     }
 }
 
-/// Real time.
+/// The system time.
 @MainActor
-struct SystemClock: AntiAITunesCore.Clock {
+struct SystemClock: TimeSource {
     var now: Date { Date() }
 
     func sleep(seconds: Double) async throws {

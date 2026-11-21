@@ -1,11 +1,16 @@
 import Foundation
 
-/// The text the menu shows. Views only render it.
+/// The text the menu shows.
+///
+/// Views only render it.
 public struct MenuState: Equatable, Sendable {
+    /// The song lines: name, artist and playback state.
     public let lines: [String]
+    /// The size and age of the AI list.
     public let listStatus: String
 
-    public init(_ nowPlaying: NowPlaying, list: ListCache? = nil) {
+    /// Creates the menu text for `nowPlaying` and `list`.
+    public init(nowPlaying: NowPlaying, list: ListCache? = nil) {
         listStatus =
             list.map {
                 let updated = $0.fetchedAt.formatted(date: .abbreviated, time: .shortened)

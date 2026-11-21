@@ -1,8 +1,9 @@
 /// Reads artist names from a CSV list (RFC 4180).
-public enum CSVNames {
-    /// The normalized names in `column`, leaving out names with fewer than 2 letters or digits.
-    /// Nil when the header has no such column.
-    public static func parse(_ text: String, column: String) -> [String]? {
+enum CSVNames {
+    /// Returns the normalized names in `column`, without names that have fewer than 2 letters or digits.
+    ///
+    /// Returns nil when the header has no such column.
+    static func parse(_ text: String, column: String) -> [String]? {
         let rows = records(text)
         guard let index = rows.first?.firstIndex(of: column) else { return nil }
         return rows.dropFirst()

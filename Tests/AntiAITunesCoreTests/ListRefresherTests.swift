@@ -50,7 +50,7 @@ struct ListRefresherTests {
         let ok = HTTPResponse(status: 200, etag: "e", body: csv)
         let list = refresher([
             .success(ok),
-            .failure(HTTPBody.TooLarge()),
+            .failure(HTTPBody.TooLargeError()),
             .success(HTTPResponse(status: 500, etag: nil, body: Data())),
             .success(HTTPResponse(status: nil, etag: nil, body: Data())),
             .success(HTTPResponse(status: 200, etag: "f", body: Data("name\nX".utf8))),
@@ -97,6 +97,6 @@ struct ListRefresherTests {
             }
         }
         #expect(try await HTTPBody.collect(bytes(), limit: 3) == Data([1, 2, 3]))
-        await #expect(throws: HTTPBody.TooLarge.self) { try await HTTPBody.collect(bytes(), limit: 2) }
+        await #expect(throws: HTTPBody.TooLargeError.self) { try await HTTPBody.collect(bytes(), limit: 2) }
     }
 }

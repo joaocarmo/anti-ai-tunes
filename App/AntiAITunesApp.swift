@@ -24,7 +24,7 @@ struct AntiAITunesApp: App {
 final class AppModel {
     let refresher: ListRefresher
     let coordinator: MatchCoordinator
-    var menu: MenuState { MenuState(coordinator.nowPlaying, list: refresher.list) }
+    var menu: MenuState { MenuState(nowPlaying: coordinator.nowPlaying, list: refresher.list) }
     @ObservationIgnored private var observer: MusicObserverAdapter?
 
     init() {
