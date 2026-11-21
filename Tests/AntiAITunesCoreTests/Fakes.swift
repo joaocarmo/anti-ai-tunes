@@ -9,10 +9,21 @@ final class EventLog {
 }
 
 @MainActor
-struct FakeMusic: MusicControlling {
+final class FakeMusic: MusicControlling {
     let log: EventLog
-    var isRunning = true
-    var fields: [String]?
+    var isRunning: Bool
+    let fields: [String]?
+    /// Runs after each `previousTrack`, to simulate what Music announces next.
+    let onPrevious: @MainActor () -> Void
+
+    init(
+        log: EventLog, isRunning: Bool = true, fields: [String]? = nil, onPrevious: @escaping @MainActor () -> Void = {}
+    ) {
+        self.log = log
+        self.isRunning = isRunning
+        self.fields = fields
+        self.onPrevious = onPrevious
+    }
 
     func currentTrackFields() -> [String]? {
         log.events.append("read")
@@ -20,12 +31,17 @@ struct FakeMusic: MusicControlling {
     }
 
     func nextTrack() { log.events.append("nextTrack") }
+
+    func previousTrack() {
+        log.events.append("previousTrack")
+        onPrevious()
+    }
 }
 
 @MainActor
 struct FakeNotifier: Notifying {
     let log: EventLog
-    func post(title: String, body: String) { log.events.append("post \(title) | \(body)") }
+    func post(title: String, body: String, skip: Skip) { log.events.append("post \(title) | \(body)") }
 }
 
 /// A time source whose sleeps return at once.
@@ -61,4 +77,12 @@ final class FakeHTTP: HTTPClient {
         log.events.append("get etag=\(etag ?? "none") max=\(maxBytes)")
         return try responses.removeFirst().get()
     }
+}
+
+/// A store in a new temporary directory.
+@MainActor
+func temporaryStore(_ directory: URL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))
+    -> Store
+{
+    Store(directory: directory)
 }

@@ -34,4 +34,15 @@ struct MatchingTests {
         #expect(verdict.isMatch)
         #expect(!Verdict(parts: ["a"], listed: ["b"]).isMatch)
     }
+
+    @Test func leavesOutAllowedParts() {
+        #expect(Verdict(parts: ["a & b", "a", "b"], listed: ["a", "b"], allowed: ["b"]).matched == ["a"])
+    }
+
+    @Test func readsBackASkipFromItsNotification() {
+        let skip = Skip(key: "k", parts: ["a", "b"], artists: "A, B")
+        #expect(Skip(action: Skip.notAIAction, userInfo: skip.userInfo) == skip)
+        #expect(Skip(action: "other", userInfo: skip.userInfo) == nil)
+        #expect(Skip(action: Skip.notAIAction, userInfo: ["key": "k"]) == nil)
+    }
 }

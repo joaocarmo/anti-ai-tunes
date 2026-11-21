@@ -2,8 +2,10 @@
 import PackageDescription
 
 var targets: [Target] = [
-    .target(name: "AntiAITunesCore"),
-    .testTarget(name: "AntiAITunesCoreTests", dependencies: ["AntiAITunesCore"]),
+    .target(name: "AntiAITunesCore", dependencies: [.product(name: "GRDB", package: "GRDB.swift")]),
+    .testTarget(
+        name: "AntiAITunesCoreTests",
+        dependencies: ["AntiAITunesCore", .product(name: "GRDB", package: "GRDB.swift")]),
 ]
 var products: [Product] = [
     .library(name: "AntiAITunesCore", targets: ["AntiAITunesCore"])
@@ -19,5 +21,6 @@ let package = Package(
     name: "AntiAITunes",
     platforms: [.macOS(.v14)],
     products: products,
+    dependencies: [.package(url: "https://github.com/groue/GRDB.swift", from: "7.12.0")],
     targets: targets
 )

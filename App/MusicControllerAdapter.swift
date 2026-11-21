@@ -18,12 +18,25 @@ struct MusicControllerAdapter: MusicControlling {
         _ = Self.nextTrackScript?.executeAndReturnError(nil)
     }
 
+    func previousTrack() {
+        _ = Self.previousTrackScript?.executeAndReturnError(nil)
+    }
+
     // The timeouts keep a busy Music app from blocking the menu for the default 2 minutes.
     private static let nextTrackScript = NSAppleScript(
         source: """
             tell application "Music"
                 with timeout of 5 seconds
                     next track
+                end timeout
+            end tell
+            """)
+
+    private static let previousTrackScript = NSAppleScript(
+        source: """
+            tell application "Music"
+                with timeout of 5 seconds
+                    previous track
                 end timeout
             end tell
             """)

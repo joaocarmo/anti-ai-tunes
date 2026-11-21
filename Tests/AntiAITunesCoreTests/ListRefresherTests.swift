@@ -11,7 +11,8 @@ struct ListRefresherTests {
 
     func refresher(_ responses: [Result<HTTPResponse, any Error>], clock: FakeClock? = nil) -> ListRefresher {
         ListRefresher(
-            directory: directory, http: FakeHTTP(log: log, responses: responses), clock: clock ?? FakeClock(log: log))
+            store: temporaryStore(directory), http: FakeHTTP(log: log, responses: responses),
+            clock: clock ?? FakeClock(log: log))
     }
 
     @Test func downloadsParsesAndCachesTheList() async {
@@ -49,14 +50,6 @@ struct ListRefresherTests {
             #expect(list.list?.changedAt == changed)
         }
         #expect(refresher([]).list?.checkedAt == clock.now)
-    }
-
-    @Test func loadsACacheWithoutAChangeDate() throws {
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        try Data(#"{"names":["a"],"etag":"e","fetchedAt":0}"#.utf8)
-            .write(to: directory.appendingPathComponent("default-list.json"))
-        let expected = ListCache(names: ["a"], etag: "e", checkedAt: Date(timeIntervalSinceReferenceDate: 0))
-        #expect(refresher([]).list == expected)
     }
 
     @Test func keepsTheCacheOnAnyFailure() async {

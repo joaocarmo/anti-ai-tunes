@@ -66,4 +66,12 @@ struct MenuStateTests {
         let changed = "Changed \(date.formatted(date: .abbreviated, time: .shortened))"
         #expect(MenuState(nowPlaying: .waiting, list: list).listDetails == ["2 artists", changed, checked])
     }
+
+    @Test func offersNotAIAndWarnsWhenNotSaving() {
+        let skip = Skip(key: "k", parts: ["a"], artists: "A")
+        let menu = MenuState(nowPlaying: .waiting, lastSkip: skip, failure: "disk full")
+        #expect(menu.notAI == "Not AI: A")
+        #expect(menu.warning == "Changes are not saved: disk full")
+        #expect(MenuState(nowPlaying: .waiting).notAI == nil)
+    }
 }
