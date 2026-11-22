@@ -225,7 +225,7 @@ struct MatchCoordinatorTests {
         let clock = FakeClock(log: log)
         clock.sleepsLeft = 1
         let ai = ai
-        let music = FakeMusic(log: log, readBack: true, onPrevious: { box.match?.handle(.track(ai, .playing)) })
+        let music = FakeMusic(log: log, readBack: "true", onPrevious: { box.match?.handle(.track(ai, .playing)) })
         let match = coordinator(music: music, clock: clock)
         box.match = match
         let skip = try skipThenFollow(match)
@@ -234,8 +234,29 @@ struct MatchCoordinatorTests {
         #expect(log.events == ["previousTrack", "clearDislike", "sleep 1"])
     }
 
+    @Test func notAIDoesNotClearTheDislikeWhileMusicIsClosed() async throws {
+        final class Box {
+            var match: MatchCoordinator?
+            var music: FakeMusic?
+        }
+        let box = Box()
+        let ai = ai
+        let music = FakeMusic(
+            log: log, readBack: "true",
+            onPrevious: {
+                box.music?.isRunning = false
+                box.match?.handle(.track(ai, .playing))
+            })
+        let match = coordinator(music: music)
+        box.match = match
+        box.music = music
+        let skip = try skipThenFollow(match)
+        await match.notAI(skip)
+        #expect(log.events == ["previousTrack", "sleep 1"])
+    }
+
     @Test func notAIClearsTheDislikeOnlyOnTheSkippedSong() async throws {
-        let match = coordinator(music: FakeMusic(log: log, readBack: true))
+        let match = coordinator(music: FakeMusic(log: log, readBack: "true"))
         let skip = try skipThenFollow(match)
         await match.notAI(skip)
         match.handle(.track(Track(name: "Aerials", artist: "System Of A Down", album: "Toxicity"), .playing))

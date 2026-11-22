@@ -14,12 +14,12 @@ final class FakeMusic: MusicControlling {
     var isRunning: Bool
     let fields: [String]?
     /// The read-back after a dislike: false by default, as Music answers for streamed songs on macOS 27.
-    let readBack: Bool?
+    let readBack: String?
     /// Runs after each `previousTrack`, to simulate what Music announces next.
     let onPrevious: @MainActor () -> Void
 
     init(
-        log: EventLog, isRunning: Bool = true, fields: [String]? = nil, readBack: Bool? = false,
+        log: EventLog, isRunning: Bool = true, fields: [String]? = nil, readBack: String? = "false",
         onPrevious: @escaping @MainActor () -> Void = {}
     ) {
         self.log = log
@@ -41,7 +41,7 @@ final class FakeMusic: MusicControlling {
         onPrevious()
     }
 
-    func dislikeCurrentTrack() -> Bool? {
+    func dislikeCurrentTrack() -> String? {
         log.events.append("dislike")
         return readBack
     }

@@ -39,12 +39,12 @@ public enum Dislike: String, Sendable {
     /// The attempt or the read-back failed.
     case failed
 
-    /// Creates the result from the read-back, which is nil when the attempt failed.
-    init(readBack: Bool?) {
+    /// Creates the result from the read-back text, where anything but "true" or "false" is a failure.
+    init(readBack: String?) {
         switch readBack {
-        case true?: self = .accepted
-        case false?: self = .ignored
-        case nil: self = .failed
+        case "true": self = .accepted
+        case "false": self = .ignored
+        default: self = .failed
         }
     }
 }

@@ -22,8 +22,8 @@ struct MusicControllerAdapter: MusicControlling {
         _ = Self.previousTrackScript?.executeAndReturnError(nil)
     }
 
-    func dislikeCurrentTrack() -> Bool? {
-        Self.dislikeScript?.executeAndReturnError(nil)?.booleanValue
+    func dislikeCurrentTrack() -> String? {
+        Self.dislikeScript?.executeAndReturnError(nil).stringValue
     }
 
     func clearDislike() {
@@ -49,13 +49,13 @@ struct MusicControllerAdapter: MusicControlling {
             end tell
             """)
 
-    // A shorter timeout, because the skip waits for the dislike.
+    // A shorter timeout, because the skip waits for the dislike. Text keeps a failed run apart from `false`.
     private static let dislikeScript = NSAppleScript(
         source: """
             tell application "Music"
                 with timeout of 2 seconds
                     set disliked of current track to true
-                    return disliked of current track
+                    return (disliked of current track) as text
                 end timeout
             end tell
             """)

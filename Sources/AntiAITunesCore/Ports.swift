@@ -13,8 +13,8 @@ public protocol MusicControlling {
     func nextTrack()
     /// Goes back to the previous song, or to the start of the current one if it has played for a few seconds.
     func previousTrack()
-    /// Dislikes the current song and returns the read-back, or nil when either step fails.
-    func dislikeCurrentTrack() -> Bool?
+    /// Dislikes the current song and returns the read-back as text ("true" or "false"), or nil when it fails.
+    func dislikeCurrentTrack() -> String?
     /// Removes the dislike from the current song.
     func clearDislike()
 }

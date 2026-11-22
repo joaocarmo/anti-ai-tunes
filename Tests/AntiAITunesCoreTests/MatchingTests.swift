@@ -115,8 +115,9 @@ struct MatchingTests {
     }
 
     @Test func readsTheDislikeResult() {
-        #expect(Dislike(readBack: true) == .accepted)
-        #expect(Dislike(readBack: false) == .ignored)
+        #expect(Dislike(readBack: "true") == .accepted)
+        #expect(Dislike(readBack: "false") == .ignored)
         #expect(Dislike(readBack: nil) == .failed)
+        #expect(Dislike(readBack: "missing value") == .failed)
     }
 }

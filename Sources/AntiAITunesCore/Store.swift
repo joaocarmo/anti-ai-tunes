@@ -4,7 +4,8 @@ import Observation
 
 /// The app's database: the AI lists, the user's decisions and the songs played.
 ///
-/// It is the only type that touches the database. Names are stored normalized.
+/// It is the only type that touches the database. Names are stored normalized. History rows also keep the song's
+/// name, artist and album as Music shows them.
 @MainActor
 @Observable
 public final class Store {

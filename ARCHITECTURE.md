@@ -40,7 +40,7 @@ All logic lives here. It has no UI code.
 - `Store`: the GRDB database (`db.sqlite`), its migrations and all queries. If the file cannot open, it saves nothing, and the menu says that changes are not saved.
 - `Archiver` *(planned)*: moves history rows beyond the newest N into the archive database.
 - `MenuState`: the view model. Views only render it.
-- Ports: `MusicControlling`, `Notifying`, `TimeSource` and `HTTPClient`. These protocols are the only way the package reaches the system. `HTTPBody.collect` enforces the response size cap for the `HTTPClient` adapter. `MusicControlling.dislikeCurrentTrack()` returns the read-back, or nil on failure, and `Dislike` maps it to `.accepted`, `.ignored` or `.failed`. A better dislike method later changes only the adapter.
+- Ports: `MusicControlling`, `Notifying`, `TimeSource` and `HTTPClient`. These protocols are the only way the package reaches the system. `HTTPBody.collect` enforces the response size cap for the `HTTPClient` adapter. `MusicControlling.dislikeCurrentTrack()` returns the read-back as text, or nil on failure, and `Dislike` maps it to `.accepted`, `.ignored` or `.failed`. A better dislike method later changes only the adapter.
 
 ### `App/` (SwiftPM executable target `AntiAITunes`)
 
@@ -65,7 +65,7 @@ Schema conventions:
 1. Table and column names are English, singular and camelCase. Every table has an explicit primary key. A single-column key is an `INTEGER PRIMARY KEY` named `id`.[^11]
 2. Unique values have a unique index. Relations use foreign keys, and child keys are indexed.[^11][^12]
 3. Every table is `STRICT`.[^13] Closed value sets use `CHECK (x IN (…))`, listing only values the roadmap names.
-4. Dates are UTC `TEXT` in GRDB's format, `YYYY-MM-DD HH:MM:SS.SSS`. Names are stored normalised, so comparisons are binary.
+4. Dates are UTC `TEXT` in GRDB's format, `YYYY-MM-DD HH:MM:SS.SSS`. Names are stored normalised, so comparisons are binary. History rows also keep the song's name, artist and album as Music shows them.
 5. `WITHOUT ROWID` only for composite keys with small rows.[^14]
 6. Migrations are SQL strings that never use app types. A shipped migration never changes. Later needs add tables, columns or indexes.[^15]
 
