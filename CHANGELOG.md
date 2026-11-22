@@ -6,6 +6,8 @@ The format is based on Keep a Changelog 1.1.0.[^1] This project follows Semantic
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-22
+
 ### Added
 
 - **Not AI** in the skip notification and in the menu: allows the artist and goes back to the skipped song.
@@ -44,7 +46,8 @@ The format is based on Keep a Changelog 1.1.0.[^1] This project follows Semantic
 - Project documentation, community files and issue and pull request templates.
 - A roadmap and an increment-based workflow for contributors.
 
-[unreleased]: https://github.com/joaocarmo/anti-ai-tunes/compare/v0.2.1...HEAD
+[unreleased]: https://github.com/joaocarmo/anti-ai-tunes/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/joaocarmo/anti-ai-tunes/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/joaocarmo/anti-ai-tunes/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/joaocarmo/anti-ai-tunes/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/joaocarmo/anti-ai-tunes/compare/v0.1.0...v0.1.1
