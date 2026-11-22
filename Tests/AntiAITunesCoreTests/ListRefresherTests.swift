@@ -60,7 +60,7 @@ struct ListRefresherTests {
             .success(HTTPResponse(status: 500, etag: nil, body: Data())),
             .success(HTTPResponse(status: nil, etag: nil, body: Data())),
             .success(HTTPResponse(status: 200, etag: "f", body: Data("name\nX".utf8))),
-            .success(HTTPResponse(status: 200, etag: "g", body: Data("artist\n-\n".utf8))),
+            .success(HTTPResponse(status: 200, etag: "g", body: Data("artist\n \n".utf8))),
         ])
         await list.refresh()
         let cached = list.list
