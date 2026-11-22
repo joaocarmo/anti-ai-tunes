@@ -83,6 +83,7 @@ The spike ran on 18 November 2026 with streamed songs only.
 | Dislike | AppleScript attempt with read-back | Apple Music API ratings, UI-scripted "Suggest Less" | The API needs a paid membership. The UI control is not reliably reachable (see the spike). |
 | Test doubles | Hand-written fakes with one shared event log | Mockable and other macro libraries | Tests can check call order, with no dependency. Revisit above about 6 ports. |
 | Persistence in v0.2.0 | JSON cache file | GRDB now | GRDB arrives with decisions in v0.3.0. GRDB on Linux is unofficial. |
+| Query layer | Raw SQL through GRDB now. GRDB's query interface (`Codable` records, `enum Columns`) for all of `Store` at once, when the first query with dynamic filters or sorting arrives (v0.6.0 or v0.7.0). Migrations stay SQL. | Point-Free's StructuredQueries and SQLiteData | Every query already runs in a test, so a wrong column fails `swift test`. The query interface comes with GRDB, so it adds no dependency. StructuredQueries is pre-1.0 and needs `swift-syntax`. SQLiteData has no Linux CI, adds about 10 packages, and reads the database from views, outside `Store`. |
 
 ## Beyond the roadmap
 
