@@ -6,6 +6,10 @@ The format is based on Keep a Changelog 1.1.0.[^1] This project follows Semantic
 
 ## [Unreleased]
 
+### Fixed
+
+- Skips featured AI artists in more credit styles, such as `[feat. X]` and `featuring X`, and AI artists with 1-character names.
+
 ## [0.3.0] - 2026-11-22
 
 ### Added
