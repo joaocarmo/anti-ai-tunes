@@ -104,16 +104,16 @@ public final class Store {
         }
     }
 
-    /// Records that the play with `id` got a notification.
-    func recordNotification(play id: Int64?) {
-        write { try $0.execute(sql: "UPDATE play SET notified = 1 WHERE id = ?", arguments: [id]) }
+    /// Records that the play with `id` got a notification at `date`.
+    func recordNotification(play id: Int64?, at date: Date) {
+        write { try $0.execute(sql: "UPDATE play SET notifiedAt = ? WHERE id = ?", arguments: [date, id]) }
     }
 
-    /// Returns how many plays of the song with `trackKey` got a notification since `date`.
+    /// Returns how many notifications plays of the song with `trackKey` got since `date`.
     func notificationCount(trackKey: String, since date: Date) -> Int {
         let count = try? queue?.read {
             try Int.fetchOne(
-                $0, sql: "SELECT count(*) FROM play WHERE trackKey = ? AND notified = 1 AND playedAt >= ?",
+                $0, sql: "SELECT count(*) FROM play WHERE trackKey = ? AND notifiedAt >= ?",
                 arguments: [trackKey, date])
         }
         return count ?? 0
@@ -169,10 +169,10 @@ public final class Store {
                       album TEXT NOT NULL,
                       action TEXT CHECK (action IN ('skip', 'pause', 'nothing')),
                       dislike TEXT CHECK (dislike IN ('accepted', 'ignored', 'failed')),
-                      notified INTEGER NOT NULL DEFAULT 0 CHECK (notified IN (0, 1))
+                      notifiedAt TEXT
                     ) STRICT;
 
-                    CREATE INDEX playOnTrackKeyAndPlayedAt ON play (trackKey, playedAt);
+                    CREATE INDEX playOnTrackKeyAndNotifiedAt ON play (trackKey, notifiedAt);
                     """)
         }
         return migrator

@@ -41,7 +41,7 @@ final class FakeMusic: MusicControlling {
         onPrevious()
     }
 
-    func dislikeCurrentTrack() -> String? {
+    func dislikeCurrentTrack(name: String, artist: String, album: String) -> String? {
         log.events.append("dislike")
         return readBack
     }

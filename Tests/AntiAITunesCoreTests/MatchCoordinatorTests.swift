@@ -205,7 +205,8 @@ struct MatchCoordinatorTests {
             try String.fetchAll(
                 $0,
                 sql: """
-                    SELECT name || ' | ' || ifnull(action, '-') || ' | ' || ifnull(dislike, '-') || ' | ' || notified
+                    SELECT name || ' | ' || ifnull(action, '-') || ' | ' || ifnull(dislike, '-') || ' | '
+                      || (notifiedAt IS NOT NULL)
                     FROM play ORDER BY id
                     """)
         }
@@ -255,13 +256,17 @@ struct MatchCoordinatorTests {
         #expect(log.events == ["previousTrack", "sleep 1"])
     }
 
-    @Test func notAIClearsTheDislikeOnlyOnTheSkippedSong() async throws {
+    @Test func notAIClearsTheDislikeOfAnOlderSkipWhenTheSongPlaysAgain() async throws {
         let match = coordinator(music: FakeMusic(log: log, readBack: "true"))
         let skip = try skipThenFollow(match)
-        await match.notAI(skip)
         match.handle(.track(Track(name: "Aerials", artist: "System Of A Down", album: "Toxicity"), .playing))
+        await match.notAI(skip)
+        #expect(log.events.isEmpty)
+        match.handle(.track(human, .playing))
         match.handle(.track(ai, .playing))
-        #expect(!log.events.contains("clearDislike"))
+        match.handle(.track(human, .playing))
+        match.handle(.track(ai, .playing))
+        #expect(log.events == ["clearDislike"])
     }
 
     @Test func saysWhenASongHasNoArtist() {

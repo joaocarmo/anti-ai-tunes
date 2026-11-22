@@ -47,10 +47,10 @@ struct StoreTests {
         let second = store.addPlay(track, at: date.addingTimeInterval(60))
         #expect(store.notificationCount(trackKey: track.key, since: date) == 0)
         store.recordSkip(play: second, dislike: .failed)
-        store.recordNotification(play: first)
-        store.recordNotification(play: second)
+        store.recordNotification(play: first, at: date.addingTimeInterval(120))
+        store.recordNotification(play: second, at: date.addingTimeInterval(60))
         #expect(store.notificationCount(trackKey: track.key, since: date) == 2)
-        #expect(store.notificationCount(trackKey: track.key, since: date.addingTimeInterval(1)) == 1)
+        #expect(store.notificationCount(trackKey: track.key, since: date.addingTimeInterval(61)) == 1)
         #expect(store.notificationCount(trackKey: "other", since: date) == 0)
         let skipped = try store.queue?.read {
             try String.fetchOne($0, sql: "SELECT action || ' ' || dislike FROM play WHERE id = ?", arguments: [second])

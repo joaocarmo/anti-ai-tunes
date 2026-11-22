@@ -1,5 +1,6 @@
 import AntiAITunesCore
 import AppKit
+import Carbon
 
 /// Sends Apple Events to the Music app.
 @MainActor
@@ -22,8 +23,19 @@ struct MusicControllerAdapter: MusicControlling {
         _ = Self.previousTrackScript?.executeAndReturnError(nil)
     }
 
-    func dislikeCurrentTrack() -> String? {
-        Self.dislikeScript?.executeAndReturnError(nil).stringValue
+    func dislikeCurrentTrack(name: String, artist: String, album: String) -> String? {
+        // Calls the script's `dislike` handler. Arguments go in as descriptors, never as script text.
+        let event = NSAppleEventDescriptor(
+            eventClass: AEEventClass(kASAppleScriptSuite), eventID: AEEventID(kASSubroutineEvent),
+            targetDescriptor: nil, returnID: AEReturnID(kAutoGenerateReturnID),
+            transactionID: AETransactionID(kAnyTransactionID))
+        event.setDescriptor(NSAppleEventDescriptor(string: "dislike"), forKeyword: AEKeyword(keyASSubroutineName))
+        let arguments = NSAppleEventDescriptor.list()
+        for (index, value) in [name, artist, album].enumerated() {
+            arguments.insert(NSAppleEventDescriptor(string: value), at: index + 1)
+        }
+        event.setDescriptor(arguments, forKeyword: AEKeyword(keyDirectObject))
+        return Self.dislikeScript?.executeAppleEvent(event, error: nil).stringValue
     }
 
     func clearDislike() {
@@ -49,15 +61,21 @@ struct MusicControllerAdapter: MusicControlling {
             end tell
             """)
 
-    // A shorter timeout, because the skip waits for the dislike. Text keeps a failed run apart from `false`.
+    // A shorter timeout, because the skip waits for the dislike. Text keeps a failed run apart from `false`. The
+    // song check stops a dislike from landing on a song that started after the match.
     private static let dislikeScript = NSAppleScript(
         source: """
-            tell application "Music"
-                with timeout of 2 seconds
-                    set disliked of current track to true
-                    return (disliked of current track) as text
-                end timeout
-            end tell
+            on dislike(trackName, trackArtist, trackAlbum)
+                tell application "Music"
+                    with timeout of 2 seconds
+                        if (get {name, artist, album} of current track) is not {trackName, trackArtist, trackAlbum} then
+                            return "other song"
+                        end if
+                        set disliked of current track to true
+                        return (disliked of current track) as text
+                    end timeout
+                end tell
+            end dislike
             """)
 
     private static let clearDislikeScript = NSAppleScript(

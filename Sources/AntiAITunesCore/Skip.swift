@@ -20,8 +20,8 @@ public struct Skip: Equatable, Sendable {
 extension Skip {
     /// Creates a skip from a notification response.
     ///
-    /// Returns nil unless the response is the **Not AI** action with a skip payload. Payloads without `disliked` come
-    /// from older versions, which never disliked.
+    /// Returns nil unless the response is the **Not AI** action with a skip payload. A payload without `disliked`
+    /// parses as not disliked.
     public init?(action: String, userInfo: [AnyHashable: Any]) {
         guard action == Self.notAIAction, let key = userInfo["key"] as? String,
             let parts = userInfo["parts"] as? [String], let artists = userInfo["artists"] as? String
