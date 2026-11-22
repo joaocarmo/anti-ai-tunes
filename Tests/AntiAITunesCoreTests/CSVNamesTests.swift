@@ -23,9 +23,13 @@ struct CSVNamesTests {
     }
 
     @Test func dropsBlankAndShortNamesAndShortRows() {
-        // "D", "ai" and "Ada" are on the default list.
-        let csv = "id,artist\n1,\n2,-\n3,...\n4,D\n5,  ai \n6\n\n7,Ada"
-        #expect(CSVNames.parse(csv, column: "artist") == ["ai", "ada"])
+        // "D", "ai" and "Ada" are on the default list. "!!!" is a real band that this rule drops.
+        let csv =
+            "id,artist\n1,\n2,!!!\n3,sunn O)))\n4,D\n5,  ai \n6\n\n7,Ada\n8,...And You Will Know Us By the Trail of Dead"
+        #expect(
+            CSVNames.parse(csv, column: "artist") == [
+                "sunn o)))", "ai", "ada", "...and you will know us by the trail of dead",
+            ])
     }
 
     @Test func rejectsAMissingColumn() {

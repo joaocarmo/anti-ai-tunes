@@ -54,11 +54,11 @@ struct MatchCoordinatorTests {
 
     @Test func namesAFeaturedArtistFromTheTitle() {
         // A fictional credit: no real song features The Velvet Sundown.
-        let match = coordinator(listed: ["example ai artist"])
-        match.handle(
-            .track(Track(name: "Example Song (feat. Example AI Artist)", artist: "Example Band", album: ""), nil))
-        #expect(
-            log.events == ["nextTrack", "post Skipped Example AI Artist (AI) | Example Song (feat. Example AI Artist)"])
+        let match = coordinator(listed: ["grimesai"])
+        let song = Track(
+            name: "Cold Touch (feat. GrimesAI)", artist: "kito", album: "Cold Touch (feat. GrimesAI) - Single")
+        match.handle(.track(song, nil))
+        #expect(log.events == ["nextTrack", "post Skipped GrimesAI (AI) | Cold Touch (feat. GrimesAI)"])
     }
 
     @Test func fallsBackToTheNormalizedName() {
