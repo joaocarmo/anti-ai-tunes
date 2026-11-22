@@ -4,9 +4,8 @@ import Testing
 @testable import AntiAITunesCore
 
 struct NowPlayingTests {
-    let song = Track(name: "Closure", artist: "D.O.D & Hayley May", album: "Closure - Single")
-    let other = Track(
-        name: "Think About Us", artist: "Sonny Fodera, D.O.D & Poppy Baskcomb", album: "Think About Us - Single")
+    let song = Track(name: "Chop Suey!", artist: "System Of A Down", album: "Toxicity")
+    let other = Track(name: "Dust on the Wind", artist: "The Velvet Sundown", album: "Floating on Echoes")
 
     @Test func startsWaiting() {
         #expect(MenuState(nowPlaying: .waiting).lines == ["Waiting for the next song"])
@@ -28,9 +27,9 @@ struct NowPlayingTests {
         let changed = now.apply(.state(.paused))
         #expect(!changed)
         #expect(now == .track(song, .paused))
-        #expect(MenuState(nowPlaying: now).lines == ["Closure", "D.O.D & Hayley May", "Paused"])
+        #expect(MenuState(nowPlaying: now).lines == ["Chop Suey!", "System Of A Down", "Paused"])
         now.apply(.state(.playing))
-        #expect(MenuState(nowPlaying: now).lines == ["Closure", "D.O.D & Hayley May"])
+        #expect(MenuState(nowPlaying: now).lines == ["Chop Suey!", "System Of A Down"])
     }
 
     @Test func stopsOnAStoppedStateOrSong() {
@@ -59,7 +58,7 @@ struct MenuStateTests {
     @Test func showsTheListStatus() {
         #expect(MenuState(nowPlaying: .waiting).listDetails == ["Not loaded yet"])
         let date = Date(timeIntervalSince1970: 0)
-        var list = ListCache(names: ["a", "b"], etag: nil, checkedAt: date)
+        var list = ListCache(names: ["atomship", "smokey september"], etag: nil, checkedAt: date)
         let checked = "Checked \(date.formatted(date: .abbreviated, time: .shortened))"
         #expect(MenuState(nowPlaying: .waiting, list: list).listDetails == ["2 artists", checked])
         list.changedAt = date
@@ -68,10 +67,11 @@ struct MenuStateTests {
     }
 
     @Test func offersNotAIAndWarnsWhenNotSaving() {
-        let skip = Skip(key: "k", parts: ["a"], artists: "A")
-        let menu = MenuState(nowPlaying: .waiting, lastSkip: skip, failure: "disk full")
-        #expect(menu.notAI == "Not AI: A")
-        #expect(menu.warning == "Changes are not saved: disk full")
+        let ai = Track(name: "Dust on the Wind", artist: "The Velvet Sundown", album: "Floating on Echoes")
+        let skip = Skip(key: ai.key, parts: ["the velvet sundown"], artists: "The Velvet Sundown")
+        let menu = MenuState(nowPlaying: .waiting, lastSkip: skip, failure: "disk I/O error")
+        #expect(menu.notAI == "Not AI: The Velvet Sundown")
+        #expect(menu.warning == "Changes are not saved: disk I/O error")
         #expect(MenuState(nowPlaying: .waiting).notAI == nil)
     }
 }

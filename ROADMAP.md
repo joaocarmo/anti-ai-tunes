@@ -18,14 +18,15 @@ This file lists what comes next and in which order. It also records the product 
 | 3 | v0.1.0 | Walking skeleton: menu-bar app that shows the current artist and title. CI with the coverage gate. Signed releases. | Done |
 | 4 | v0.2.0 | Skip AI artists from the default list. "Skipped X (AI)" notification. | Done |
 | 5 | v0.3.0 | **Not AI** button: allow the artist and go back to the skipped song. | Done |
-| 6 | v0.4.0 | History of played songs. Best-effort dislike, with the result recorded. "Couldn't detect the artist" notification. Daily notification cap. | Next |
-| 7 | v0.5.0 | Settings: action on match, delay, pause, launch at login, notification-style warning. The new views are checked with VoiceOver. | Planned |
-| 8 | v0.6.0 | Subscribed lists: add and edit lists, `lines` format, transform command. | Planned |
-| 9 | v0.7.0 | Manual control: mark as AI, report upstream, list of decisions. | Planned |
-| 10 | v0.8.0 | History archive. | Planned |
-| 11 | v0.9.0 | Polish: app icon, menu-bar icon, About panel with the version. Check for a newer release, with an off switch (no auto-update). Check whether a download made by the app skips the Gatekeeper prompt on each update. Localisation in British English (`en-GB`) and European Portuguese (`pt-PT`). | Planned |
-| 12 | v1.0.0 | Stable release, after v0.9.0 runs for a while with no open bugs. | Planned |
-| 13 | later | Experimental: "Suggest Less" through UI scripting, if macOS offers a reliable control. | Idea |
+| 6 | v0.3.1 | Match more credit styles (`[feat. X]`, `{feat. X}`, `featuring X`, brackets inside names) and 1-character names. | Done |
+| 7 | v0.4.0 | History of played songs. Best-effort dislike, with the result recorded. "Couldn't detect the artist" notification. Daily notification cap. | Next |
+| 8 | v0.5.0 | Settings: action on match, delay, pause, launch at login, notification-style warning. The new views are checked with VoiceOver. | Planned |
+| 9 | v0.6.0 | Subscribed lists: add and edit lists, `lines` format, transform command. | Planned |
+| 10 | v0.7.0 | Manual control: mark as AI, report upstream, list of decisions. | Planned |
+| 11 | v0.8.0 | History archive. | Planned |
+| 12 | v0.9.0 | Polish: app icon, menu-bar icon, About panel with the version. Check for a newer release, with an off switch (no auto-update). Check whether a download made by the app skips the Gatekeeper prompt on each update. Localisation in British English (`en-GB`) and European Portuguese (`pt-PT`). | Planned |
+| 13 | v1.0.0 | Stable release, after v0.9.0 runs for a while with no open bugs. | Planned |
+| 14 | later | Experimental: "Suggest Less" through UI scripting, if macOS offers a reliable control. | Idea |
 
 Increment 3 shipped as v0.1.1. The v0.1.0 release has no build attached (see CHANGELOG.md).
 
@@ -36,7 +37,7 @@ Increment 3 shipped as v0.1.1. The v0.1.0 release has no build attached (see CHA
 | Platform | Swift menu-bar app, unsandboxed, macOS 14 or later. No paid services, accounts or APIs. |
 | Track detection | The `com.apple.Music.playerInfo` distributed notification. No polling. One best-effort Apple Events read of the current song at launch, because Music announces only changes. |
 | Track key | Normalised `Name + Artist + Album`. A notification without `Name` only updates the player state. Repeated notifications for the same key count once. |
-| Matching | Case-fold, strip diacritics, keep dots, trim and collapse spaces. Split the artist on `, `, ` & `, ` x `, ` feat. ` and ` ft. `. Also read `(feat. X)` from the title. Match the whole string or any part. |
+| Matching | Case-fold, strip diacritics, keep dots, trim and collapse spaces. Split the artist on `, `, ` & `, ` x `, ` feat. `, ` ft. ` and ` featuring `. Also read featured names from the title: after `feat.`, `ft.` or `featuring`, inside `()`, `[]` or `{}`, or to the end of the title. Keep every non-blank listed name, however short. Match the whole string or any part. |
 | Verdict | An `allow` decision excludes that part. A `skip` decision or a listed name triggers the action. |
 | Action on match | `skip` (default), `pause` or `nothing`, after a delay of 0 to 60 seconds (default 0). A track change or **Not AI** cancels a pending action. The app acts only while the track key still matches. |
 | Dislike | Best-effort, before every skip. The app sets `disliked`, reads it back and records the result. It never claims a dislike that did not stick. All of it sits behind `MusicControlling.dislikeCurrentTrack()`, so a better method later changes only the adapter. |

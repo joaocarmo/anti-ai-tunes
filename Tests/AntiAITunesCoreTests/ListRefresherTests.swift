@@ -60,7 +60,7 @@ struct ListRefresherTests {
             .success(HTTPResponse(status: 500, etag: nil, body: Data())),
             .success(HTTPResponse(status: nil, etag: nil, body: Data())),
             .success(HTTPResponse(status: 200, etag: "f", body: Data("name\nX".utf8))),
-            .success(HTTPResponse(status: 200, etag: "g", body: Data("artist\n-\n".utf8))),
+            .success(HTTPResponse(status: 200, etag: "g", body: Data("artist\n \n".utf8))),
         ])
         await list.refresh()
         let cached = list.list
@@ -72,9 +72,10 @@ struct ListRefresherTests {
     @Test func rejectsAListThatLostMoreThanHalfItsNames() async {
         func csv(_ names: String...) -> Data { Data((["artist"] + names).joined(separator: "\n").utf8) }
         let list = refresher([
-            .success(HTTPResponse(status: 200, etag: "a", body: csv("One", "Two", "Three"))),
-            .success(HTTPResponse(status: 200, etag: "b", body: csv("One"))),
-            .success(HTTPResponse(status: 200, etag: "c", body: csv("One", "Two"))),
+            .success(
+                HTTPResponse(status: 200, etag: "a", body: csv("Atomship", "Smokey September", "The Velvet Sundown"))),
+            .success(HTTPResponse(status: 200, etag: "b", body: csv("Atomship"))),
+            .success(HTTPResponse(status: 200, etag: "c", body: csv("Atomship", "Smokey September"))),
         ])
         var changes = 0
         list.onChange = { changes += 1 }
@@ -82,7 +83,7 @@ struct ListRefresherTests {
         await list.refresh()
         #expect(list.list?.etag == "a")
         await list.refresh()
-        #expect(list.names == ["one", "two"])
+        #expect(list.names == ["atomship", "smokey september"])
         #expect(changes == 2)
     }
 

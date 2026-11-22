@@ -1,6 +1,6 @@
 /// Reads artist names from a CSV list (RFC 4180).
 enum CSVNames {
-    /// Returns the normalized names in `column`, without names that have fewer than 2 letters or digits.
+    /// Returns the normalized names in `column`, without blank names.
     ///
     /// Returns nil when the header has no such column.
     static func parse(_ text: String, column: String) -> [String]? {
@@ -8,7 +8,7 @@ enum CSVNames {
         guard let index = rows.first?.firstIndex(of: column) else { return nil }
         return rows.dropFirst()
             .compactMap { index < $0.count ? Normalizer.normalize($0[index]) : nil }
-            .filter { $0.filter { $0.isLetter || $0.isNumber }.count >= 2 }
+            .filter { !$0.isEmpty }
     }
 
     static func records(_ text: String) -> [[String]] {

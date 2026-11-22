@@ -7,9 +7,9 @@ enum Fixture {
     static var freeYourMind: [AnyHashable: Any] {
         [
             "Genre": "Dance",
-            "Album": "Free Your Mind - Single",
+            "Album": "Free Your Mind (Extended Mix) - Single",
             "Total Time": 201000,
-            "Name": "Free Your Mind",
+            "Name": "Free Your Mind (Extended Mix)",
             "Player State": "Playing",
             "Composer": "Guiorgi Smith, Harvey Blumler, Dave Bissett, Sam Mack & Victor Simonelli",
             "Artist": "Prospa, Cloonee & Sybil",
@@ -21,7 +21,9 @@ enum Fixture {
 struct PlayerEventTests {
     @Test func parsesASongMessage() {
         let event = PlayerEvent(userInfo: Fixture.freeYourMind)
-        let track = Track(name: "Free Your Mind", artist: "Prospa, Cloonee & Sybil", album: "Free Your Mind - Single")
+        let track = Track(
+            name: "Free Your Mind (Extended Mix)", artist: "Prospa, Cloonee & Sybil",
+            album: "Free Your Mind (Extended Mix) - Single")
         #expect(event == .track(track, .playing))
     }
 
@@ -40,9 +42,12 @@ struct PlayerEventTests {
     }
 
     @Test func parsesTheLaunchSnapshot() {
-        let event = PlayerEvent(snapshot: ["paused", "Closure", "D.O.D & Hayley May", "Closure - Single"])
+        let event = PlayerEvent(snapshot: ["paused", "Dust on the Wind", "The Velvet Sundown", "Floating on Echoes"])
         #expect(
-            event == .track(Track(name: "Closure", artist: "D.O.D & Hayley May", album: "Closure - Single"), .paused))
+            event
+                == .track(
+                    Track(name: "Dust on the Wind", artist: "The Velvet Sundown", album: "Floating on Echoes"), .paused)
+        )
         #expect(PlayerEvent(snapshot: ["stopped", "", "", ""]) == .state(.stopped))
         #expect(PlayerEvent(snapshot: ["playing"]) == nil)
     }

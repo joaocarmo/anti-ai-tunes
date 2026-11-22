@@ -2,7 +2,7 @@
 
 This file describes how Anti-AI Tunes is built and the rules the code must follow. It follows the ARCHITECTURE.md format: a short map of the code plus the rules that rarely change.[^1] Find code with symbol search. This file names types but does not link to them, because links go stale.
 
-Status: v0.3.0 in progress. Types marked *(planned)* do not exist yet. The rest is in the code. Update this file when an invariant or a boundary changes.
+Status: v0.3.1 in progress. Types marked *(planned)* do not exist yet. The rest is in the code. Update this file when an invariant or a boundary changes.
 
 ## Bird's-eye view
 
@@ -27,13 +27,13 @@ SourceRefresher --HTTP + ETag--> [TransformRunner] --> SourceParser --> Store (l
 All logic lives here. It has no UI code.
 
 - `Normalizer`: case-folds, strips diacritics, trims and collapses whitespace. Keeps dots.
-- `Track.artistParts()`: normalises the artist and splits it on `, `, ` & `, ` x `, ` feat. ` and ` ft. `. Also reads `(feat. X)` and `(ft. X)` from the title.
+- `Track.artistParts()`: normalises the artist and splits it on `, `, ` & `, ` x `, ` feat. `, ` ft. ` and ` featuring `. Also reads featured names from the title, after `feat.`, `ft.` or `featuring`: inside `()`, `[]` or `{}` up to the matching bracket, or without a bracket up to the end. Brackets inside a name stay in it.
 - `Verdict`: the parts that are on the list and not allowed by a decision.
 - `PlayerEvent` and `Track`: parse the `playerInfo` dictionary and the launch read. A message without `Name` is a state-only event. `Track.key` joins the normalised `Name`, `Artist` and `Album`, because streamed songs carry no persistent ID.
 - `NowPlaying`: applies events to the current state and reports when a different song starts, so repeats count once.
 - `MatchCoordinator`: the core flow. It owns `NowPlaying` and checks each song once, the first time it plays. On a match, it skips and notifies. It acts in the same main-actor turn as the matching `playerInfo`, so the key is still the latest (invariant 6). A delay before acting must compare the key again. It sends Apple Events only while `MusicControlling.isRunning` is true. **Not AI** allows every matched part. For the most recent skip, and only while the song after it plays, it also sends `previous track`, waits 1 second, and sends it once more if the skipped song is not back. The first call may only restart the current song. Later it also handles the delay before acting, the track-key check, the dislike attempt, history rows and the daily notification cap.
 - `Skip`: the track key, matched parts and display names of a skip, and the notification payload that brings them back to **Not AI**, even after a relaunch.
-- `CSVNames`: parses a `csv` body (RFC 4180) and returns the normalised names in a named column. Drops names with fewer than 2 letters or digits. The `lines` format comes with subscribed lists.
+- `CSVNames`: parses a `csv` body (RFC 4180) and returns the normalised names in a named column. Drops blank names. The `lines` format comes with subscribed lists.
 - `TransformRunner` *(planned)*: runs an optional local command. The downloaded body goes in on stdin, and names come out on stdout.
 - `SourceRefresher` *(planned)*: downloads each subscribed list with `If-None-Match`. It replaces that list's rows in one transaction.
 - `ListRefresher` and `ListCache`: download the default list with `If-None-Match` at launch and every 24 hours, with a 10 MB cap. They keep it in `Store`, with the time the names last changed and the time the host last answered. Any failure keeps the stored list. `SourceRefresher` replaces `ListRefresher`.
@@ -112,6 +112,8 @@ GRDB handles the database and migrations. Lists and decisions are cached in memo
 ### Testing
 
 Every feature in the package ships with unit tests. CI fails below 100% line coverage. Faults such as a read-only directory, a non-zero exit or a timeout are injected, never waited for.
+
+Fixtures use real songs, with the artist, title and album as Apple Music shows them. The Velvet Sundown, "Dust on the Wind" (*Floating on Echoes*), is on the default list and plays the AI artist. System Of A Down, "Chop Suey!" (*Toxicity*), plays the human artist. A test never lists a real human artist as AI. When no real data fits, it uses a clearly fictional name.
 
 ### Security
 
