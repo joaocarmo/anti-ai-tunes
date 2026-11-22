@@ -19,8 +19,8 @@ This file lists what comes next and in which order. It also records the product 
 | 4 | v0.2.0 | Skip AI artists from the default list. "Skipped X (AI)" notification. | Done |
 | 5 | v0.3.0 | **Not AI** button: allow the artist and go back to the skipped song. | Done |
 | 6 | v0.3.1 | Match more credit styles (`[feat. X]`, `{feat. X}`, `featuring X`, brackets inside names) and 1-character names. | Done |
-| 7 | v0.4.0 | History of played songs. Best-effort dislike, with the result recorded. "Couldn't detect the artist" notification. Daily notification cap. | Next |
-| 8 | v0.5.0 | Settings: action on match, delay, pause, launch at login, notification-style warning. The new views are checked with VoiceOver. | Planned |
+| 7 | v0.4.0 | History of played songs. Best-effort dislike, with the result recorded. "Couldn't detect the artist" notification. Daily notification cap. | Done |
+| 8 | v0.5.0 | Settings: action on match, delay, pause, launch at login, notification-style warning, dislike of songs the user rated. The new views are checked with VoiceOver. | Next |
 | 9 | v0.6.0 | Subscribed lists: add and edit lists, `lines` format, transform command. | Planned |
 | 10 | v0.7.0 | Manual control: mark as AI, report upstream, list of decisions. | Planned |
 | 11 | v0.8.0 | History archive. | Planned |
@@ -40,10 +40,10 @@ Increment 3 shipped as v0.1.1. The v0.1.0 release has no build attached (see CHA
 | Matching | Case-fold, strip diacritics, keep dots, trim and collapse spaces. Split the artist on `, `, ` & `, ` x `, ` feat. `, ` ft. ` and ` featuring `. Also read featured names from the title: after `feat.`, `ft.` or `featuring`, inside `()`, `[]` or `{}`, or to the end of the title. Keep every non-blank listed name, however short. Match the whole string or any part. |
 | Verdict | An `allow` decision excludes that part. A `skip` decision or a listed name triggers the action. |
 | Action on match | `skip` (default), `pause` or `nothing`, after a delay of 0 to 60 seconds (default 0). A track change or **Not AI** cancels a pending action. The app acts only while the track key still matches. |
-| Dislike | Best-effort, before every skip. The app sets `disliked`, reads it back and records the result. It never claims a dislike that did not stick. All of it sits behind `MusicControlling.dislikeCurrentTrack()`, so a better method later changes only the adapter. |
+| Dislike | Best-effort, before every skip. The app sets `disliked`, reads it back and records the result. It never claims a dislike that did not stick. By default it also dislikes songs the user favourited or disliked, so **Not AI** can clear a dislike the user set. A setting (v0.5.0) chooses whether rated songs are left alone. All of it sits behind `MusicControlling.dislikeCurrentTrack()`, so a better method later changes only the adapter. |
 | Undo (**Not AI**) | Store `allow` for each matched part. Go back with `previous track`. Wait up to 1 second for the skipped song. If it is not playing, send `previous track` once more. Stop after 2 calls. The app waits a fixed 1 second. It goes back only for the most recent skip, while the song after it plays. An older skip is only allowed. **Not AI** is in the notification and the menu, because banners disappear on a timer. Clear the dislike only if it stuck. |
 | No artist | A song with a name but no artist gets 1 notification: "Couldn't detect the artist for <name>". |
-| Notification cap | After N notifications (default 3) for the same key on one day, the app acts silently. 0 means no cap. Counts reset at local midnight and when a decision changes. |
+| Notification cap | After N notifications (default 3) for the same key on one day, the app acts silently. 0 means no cap. Counts reset at local midnight and when a decision changes. The counts come from the history rows that got a notification. |
 | Lists | Subscriptions with a URL and a format (`csv` with a column, or `lines`). An optional local transform command reads the download on stdin. Refresh at launch, every 24 hours and on demand, with ETag. Default list: CennoxX `SpotifyAiArtists.csv`. |
 | History | 1 row per song played. The newest 1,000 rows stay in `db.sqlite`. Older rows move to `history-archive.sqlite` in the same folder. |
 | Storage | SQLite through GRDB, in `~/Library/Application Support/AntiAITunes/`. Settings in `UserDefaults`. |

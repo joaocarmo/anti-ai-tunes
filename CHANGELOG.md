@@ -6,6 +6,13 @@ The format is based on Keep a Changelog 1.1.0.[^1] This project follows Semantic
 
 ## [Unreleased]
 
+### Added
+
+- The app records each song it hears and what it did, in its database.
+- Before it skips a song, the app tries to dislike it. Music ignores this for streamed songs on recent macOS versions. **Not AI** removes a dislike that stuck.
+- A notification when a song has no artist to check.
+- After 3 notifications for the same song on one day, the app acts without notifying.
+
 ## [0.3.1] - 2026-11-22
 
 ### Fixed

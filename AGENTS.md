@@ -2,7 +2,7 @@
 
 Anti-AI Tunes is a macOS menu-bar app. It skips AI-generated artists in the Music app (Apple Music). Stack: Swift, SwiftUI, SQLite through GRDB.
 
-Status: v0.3.1 in progress. The menu-bar app shows the current song, skips songs by artists on the default AI list, and undoes a skip with **Not AI**. ARCHITECTURE.md marks planned types.
+Status: v0.4.0 in progress. The menu-bar app shows the current song, skips songs by artists on the default AI list, and undoes a skip with **Not AI**. It records each song in a history. ARCHITECTURE.md marks planned types.
 
 This file follows the AGENTS.md convention.[^1] Claude Code reads it directly, so the repo has no `CLAUDE.md`.[^2]
 

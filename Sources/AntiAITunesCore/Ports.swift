@@ -13,6 +13,12 @@ public protocol MusicControlling {
     func nextTrack()
     /// Goes back to the previous song, or to the start of the current one if it has played for a few seconds.
     func previousTrack()
+    /// Dislikes the current song if it still has this name, artist and album, and returns the read-back as text.
+    ///
+    /// The read-back is "true" or "false". Any other text, or nil, means the dislike did not run.
+    func dislikeCurrentTrack(name: String, artist: String, album: String) -> String?
+    /// Removes the dislike from the current song.
+    func clearDislike()
 }
 
 /// Shows notifications to the user.
@@ -20,6 +26,8 @@ public protocol MusicControlling {
 public protocol Notifying {
     /// Shows a notification with `title` and `body`, and a **Not AI** action for `skip`.
     func post(title: String, body: String, skip: Skip)
+    /// Shows a notification with `title` and `body`, without actions.
+    func post(title: String, body: String)
 }
 
 /// The only source of time, so tests never sleep.

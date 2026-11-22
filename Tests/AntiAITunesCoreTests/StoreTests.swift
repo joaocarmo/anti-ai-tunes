@@ -40,6 +40,24 @@ struct StoreTests {
                 == ListCache(names: ["the velvet sundown"], etag: "f", checkedAt: date.addingTimeInterval(60)))
     }
 
+    @Test func recordsPlaysAndCountsTheirNotifications() throws {
+        let store = Store(directory: directory)
+        let track = Track(name: "Dust on the Wind", artist: "The Velvet Sundown", album: "Floating on Echoes")
+        let first = try #require(store.addPlay(track, at: date))
+        let second = store.addPlay(track, at: date.addingTimeInterval(60))
+        #expect(store.notificationCount(trackKey: track.key, since: date) == 0)
+        store.recordSkip(play: second, dislike: .failed)
+        store.recordNotification(play: first, at: date.addingTimeInterval(120))
+        store.recordNotification(play: second, at: date.addingTimeInterval(60))
+        #expect(store.notificationCount(trackKey: track.key, since: date) == 2)
+        #expect(store.notificationCount(trackKey: track.key, since: date.addingTimeInterval(61)) == 1)
+        #expect(store.notificationCount(trackKey: "other", since: date) == 0)
+        let skipped = try store.queue?.read {
+            try String.fetchOne($0, sql: "SELECT action || ' ' || dislike FROM play WHERE id = ?", arguments: [second])
+        }
+        #expect(skipped == "skip failed")
+    }
+
     @Test func skipsASourceThatWasNeverChecked() throws {
         let store = Store(directory: directory)
         try store.queue?.write {
@@ -56,6 +74,14 @@ struct StoreTests {
             try queue.write {
                 try $0.execute(
                     sql: "INSERT INTO decision (name, verdict, decidedAt) VALUES ('the velvet sundown', 'maybe', 'd')")
+            }
+        }
+        #expect(throws: DatabaseError.self) {
+            try queue.write {
+                try $0.execute(
+                    sql:
+                        "INSERT INTO play (playedAt, trackKey, name, artist, album, action) VALUES ('d', 'k', 'n', 'a', 'b', 'maybe')"
+                )
             }
         }
         #expect(throws: DatabaseError.self) {
@@ -83,6 +109,9 @@ struct StoreTests {
         store.save(ListCache(names: ["atomship"], checkedAt: date), url: url)
         #expect(store.allowed().isEmpty)
         #expect(store.list(url: url) == nil)
+        let track = Track(name: "Dust on the Wind", artist: "The Velvet Sundown", album: "Floating on Echoes")
+        #expect(store.addPlay(track, at: date) == nil)
+        #expect(store.notificationCount(trackKey: track.key, since: date) == 0)
     }
 
     @Test func reportsAFailedWrite() throws {

@@ -22,11 +22,24 @@ final class NotifierAdapter: NSObject, Notifying, UNUserNotificationCenterDelega
     }
 
     func post(title: String, body: String, skip: Skip) {
+        let content = Self.content(title: title, body: body)
+        content.categoryIdentifier = Skip.category
+        content.userInfo = skip.userInfo
+        Self.add(content)
+    }
+
+    func post(title: String, body: String) {
+        Self.add(Self.content(title: title, body: body))
+    }
+
+    private static func content(title: String, body: String) -> UNMutableNotificationContent {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
-        content.categoryIdentifier = Skip.category
-        content.userInfo = skip.userInfo
+        return content
+    }
+
+    private static func add(_ content: UNNotificationContent) {
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
     }

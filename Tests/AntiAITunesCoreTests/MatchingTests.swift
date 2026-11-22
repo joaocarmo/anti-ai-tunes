@@ -102,5 +102,22 @@ struct MatchingTests {
         #expect(Skip(action: Skip.notAIAction, userInfo: skip.userInfo) == skip)
         #expect(Skip(action: "other", userInfo: skip.userInfo) == nil)
         #expect(Skip(action: Skip.notAIAction, userInfo: ["key": track.key]) == nil)
+        let disliked = Skip(
+            key: track.key, parts: ["the velvet sundown"], artists: "The Velvet Sundown", disliked: true)
+        #expect(Skip(action: Skip.notAIAction, userInfo: disliked.userInfo) == disliked)
+    }
+
+    @Test func readsANotificationWithoutTheDislike() {
+        let userInfo: [AnyHashable: Any] = [
+            "key": "k", "parts": ["the velvet sundown"], "artists": "The Velvet Sundown",
+        ]
+        #expect(Skip(action: Skip.notAIAction, userInfo: userInfo)?.disliked == false)
+    }
+
+    @Test func readsTheDislikeResult() {
+        #expect(Dislike(readBack: "true") == .accepted)
+        #expect(Dislike(readBack: "false") == .ignored)
+        #expect(Dislike(readBack: nil) == .failed)
+        #expect(Dislike(readBack: "missing value") == .failed)
     }
 }
