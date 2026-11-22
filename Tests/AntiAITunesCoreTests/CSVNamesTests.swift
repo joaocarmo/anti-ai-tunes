@@ -24,11 +24,15 @@ struct CSVNamesTests {
 
     @Test func dropsBlankAndShortNamesAndShortRows() {
         // "D", "ai" and "Ada" are on the default list. "!!!" is a real band that this rule drops.
-        let csv =
-            "id,artist\n1,\n2,!!!\n3,sunn O)))\n4,D\n5,  ai \n6\n\n7,Ada\n8,...And You Will Know Us By the Trail of Dead"
+        let csv = [
+            "id,artist", "1,", "2,!!!", "3,sunn O)))", "4,D", "5,  ai ", "6", "", "7,Ada",
+            "8,...And You Will Know Us By the Trail of Dead", "9,Godspeed You! Black Emperor",
+            "10,Paracoccidiodiomicosisproctitisarcomucosis",
+        ].joined(separator: "\n")
         #expect(
             CSVNames.parse(csv, column: "artist") == [
-                "sunn o)))", "ai", "ada", "...and you will know us by the trail of dead",
+                "sunn o)))", "ai", "ada", "...and you will know us by the trail of dead", "godspeed you! black emperor",
+                "paracoccidiodiomicosisproctitisarcomucosis",
             ])
     }
 
