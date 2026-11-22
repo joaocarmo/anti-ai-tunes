@@ -1,4 +1,5 @@
 import Foundation
+import GRDB
 import Testing
 
 @testable import AntiAITunesCore
@@ -22,7 +23,7 @@ struct MatchCoordinatorTests {
     @Test func skipsAListedArtistAndNotifies() {
         let match = coordinator()
         match.handle(.track(ai, .playing))
-        #expect(log.events == ["nextTrack", "post Skipped The Velvet Sundown (AI) | Dust on the Wind"])
+        #expect(log.events == ["dislike", "nextTrack", "post Skipped The Velvet Sundown (AI) | Dust on the Wind"])
         #expect(match.nowPlaying == .track(ai, .playing))
     }
 
@@ -37,7 +38,7 @@ struct MatchCoordinatorTests {
         match.handle(.track(ai, .paused))
         #expect(log.events.isEmpty)
         match.handle(.state(.playing))
-        #expect(log.events.first == "nextTrack")
+        #expect(log.events.first == "dislike")
     }
 
     @Test func checksEachSongOnceUntilAnotherStarts() {
@@ -46,10 +47,10 @@ struct MatchCoordinatorTests {
         match.handle(.track(ai, .playing))
         match.handle(.state(.paused))
         match.handle(.state(.playing))
-        #expect(log.events.count == 2)
+        #expect(log.events.count == 3)
         match.handle(.track(human, .paused))
         match.handle(.track(ai, .playing))
-        #expect(log.events.count == 4)
+        #expect(log.events.count == 6)
     }
 
     @Test func namesAFeaturedArtistFromTheTitle() {
@@ -58,7 +59,7 @@ struct MatchCoordinatorTests {
         let song = Track(
             name: "Cold Touch (feat. GrimesAI)", artist: "kito", album: "Cold Touch (feat. GrimesAI) - Single")
         match.handle(.track(song, nil))
-        #expect(log.events == ["nextTrack", "post Skipped GrimesAI (AI) | Cold Touch (feat. GrimesAI)"])
+        #expect(log.events == ["dislike", "nextTrack", "post Skipped GrimesAI (AI) | Cold Touch (feat. GrimesAI)"])
     }
 
     @Test func fallsBackToTheNormalizedName() {
@@ -77,7 +78,7 @@ struct MatchCoordinatorTests {
         #expect(log.events.isEmpty)
         list.names = ["the velvet sundown"]
         match.recheck()
-        #expect(log.events.first == "nextTrack")
+        #expect(log.events.first == "dislike")
     }
 
     @Test func actsOnlyWhileMusicRuns() {
@@ -95,7 +96,10 @@ struct MatchCoordinatorTests {
         let match = coordinator(music: FakeMusic(log: log, fields: fields))
         match.start()
         #expect(match.nowPlaying == .track(ai, .playing))
-        #expect(log.events == ["read", "read", "nextTrack", "post Skipped The Velvet Sundown (AI) | Dust on the Wind"])
+        #expect(
+            log.events == [
+                "read", "read", "dislike", "nextTrack", "post Skipped The Velvet Sundown (AI) | Dust on the Wind",
+            ])
     }
 
     // Plays `ai`, which is skipped, then `human`, the song that follows it.
@@ -188,5 +192,92 @@ struct MatchCoordinatorTests {
         store.allow(["the velvet sundown"], at: .now)
         coordinator(store: store).handle(.track(ai, .playing))
         #expect(log.events.isEmpty)
+    }
+
+    @Test func recordsEachSongAndWhatTheAppDid() throws {
+        let store = temporaryStore()
+        let match = coordinator(store: store)
+        match.handle(.track(human, .paused))
+        match.handle(.state(.playing))
+        match.recheck()
+        match.handle(.track(ai, .playing))
+        let rows = try #require(store.queue).read {
+            try String.fetchAll(
+                $0,
+                sql: """
+                    SELECT name || ' | ' || ifnull(action, '-') || ' | ' || ifnull(dislike, '-') || ' | ' || notified
+                    FROM play ORDER BY id
+                    """)
+        }
+        #expect(rows == ["Chop Suey! | - | - | 0", "Dust on the Wind | skip | ignored | 1"])
+    }
+
+    @Test func skipsWhenTheDislikeFails() throws {
+        let match = coordinator(music: FakeMusic(log: log, readBack: nil))
+        match.handle(.track(ai, .playing))
+        #expect(log.events == ["dislike", "nextTrack", "post Skipped The Velvet Sundown (AI) | Dust on the Wind"])
+        #expect(try #require(match.lastSkip).disliked == false)
+    }
+
+    @Test func notAIClearsADislikeThatStuckOnceTheSongIsBack() async throws {
+        final class Box { var match: MatchCoordinator? }
+        let box = Box()
+        let clock = FakeClock(log: log)
+        clock.sleepsLeft = 1
+        let ai = ai
+        let music = FakeMusic(log: log, readBack: true, onPrevious: { box.match?.handle(.track(ai, .playing)) })
+        let match = coordinator(music: music, clock: clock)
+        box.match = match
+        let skip = try skipThenFollow(match)
+        #expect(skip.disliked)
+        await match.notAI(skip)
+        #expect(log.events == ["previousTrack", "clearDislike", "sleep 1"])
+    }
+
+    @Test func notAIClearsTheDislikeOnlyOnTheSkippedSong() async throws {
+        let match = coordinator(music: FakeMusic(log: log, readBack: true))
+        let skip = try skipThenFollow(match)
+        await match.notAI(skip)
+        match.handle(.track(Track(name: "Aerials", artist: "System Of A Down", album: "Toxicity"), .playing))
+        match.handle(.track(ai, .playing))
+        #expect(!log.events.contains("clearDislike"))
+    }
+
+    @Test func saysWhenASongHasNoArtist() {
+        // Fictional: a stream title without an artist.
+        let match = coordinator()
+        match.handle(.track(Track(name: "Example Radio Show", artist: " ", album: ""), .playing))
+        match.recheck()
+        #expect(log.events == ["post Couldn't detect the artist for Example Radio Show |  | no actions"])
+    }
+
+    @Test func skipsAFeaturedArtistWhenTheArtistIsMissing() {
+        // Fictional: no real song credits GrimesAI only in the title.
+        let match = coordinator(listed: ["grimesai"])
+        match.handle(.track(Track(name: "Example Song (feat. GrimesAI)", artist: "", album: ""), .playing))
+        #expect(log.events == ["dislike", "nextTrack", "post Skipped GrimesAI (AI) | Example Song (feat. GrimesAI)"])
+    }
+
+    @Test func capsNotificationsPerSongAndLocalDay() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        // The clock starts at 17h00min on 15 January 2027 in UTC+9, so local midnight is 7 hours later.
+        calendar.timeZone = try #require(TimeZone(secondsFromGMT: 9 * 3600))
+        let clock = FakeClock(log: log)
+        let match = MatchCoordinator(
+            music: FakeMusic(log: log), notifier: FakeNotifier(log: log), store: temporaryStore(), clock: clock,
+            calendar: calendar, listed: { ["the velvet sundown"] })
+        func playAI() {
+            match.handle(.track(ai, .playing))
+            match.handle(.track(human, .playing))
+        }
+        for _ in 1...4 { playAI() }
+        #expect(log.events.filter { $0.hasPrefix("post") }.count == 3)
+        #expect(log.events.filter { $0 == "nextTrack" }.count == 4)
+        clock.now += 7 * 3600 - 1
+        playAI()
+        #expect(log.events.filter { $0.hasPrefix("post") }.count == 3)
+        clock.now += 1
+        playAI()
+        #expect(log.events.filter { $0.hasPrefix("post") }.count == 4)
     }
 }

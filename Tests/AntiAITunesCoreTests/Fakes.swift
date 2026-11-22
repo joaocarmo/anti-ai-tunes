@@ -13,15 +13,19 @@ final class FakeMusic: MusicControlling {
     let log: EventLog
     var isRunning: Bool
     let fields: [String]?
+    /// The read-back after a dislike: false by default, as Music answers for streamed songs on macOS 27.
+    let readBack: Bool?
     /// Runs after each `previousTrack`, to simulate what Music announces next.
     let onPrevious: @MainActor () -> Void
 
     init(
-        log: EventLog, isRunning: Bool = true, fields: [String]? = nil, onPrevious: @escaping @MainActor () -> Void = {}
+        log: EventLog, isRunning: Bool = true, fields: [String]? = nil, readBack: Bool? = false,
+        onPrevious: @escaping @MainActor () -> Void = {}
     ) {
         self.log = log
         self.isRunning = isRunning
         self.fields = fields
+        self.readBack = readBack
         self.onPrevious = onPrevious
     }
 
@@ -36,12 +40,20 @@ final class FakeMusic: MusicControlling {
         log.events.append("previousTrack")
         onPrevious()
     }
+
+    func dislikeCurrentTrack() -> Bool? {
+        log.events.append("dislike")
+        return readBack
+    }
+
+    func clearDislike() { log.events.append("clearDislike") }
 }
 
 @MainActor
 struct FakeNotifier: Notifying {
     let log: EventLog
     func post(title: String, body: String, skip: Skip) { log.events.append("post \(title) | \(body)") }
+    func post(title: String, body: String) { log.events.append("post \(title) | \(body) | no actions") }
 }
 
 /// A time source whose sleeps return at once.

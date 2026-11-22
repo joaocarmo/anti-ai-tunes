@@ -2,7 +2,7 @@ import Foundation
 import GRDB
 import Observation
 
-/// The app's database: the AI lists and the user's decisions.
+/// The app's database: the AI lists, the user's decisions and the songs played.
 ///
 /// It is the only type that touches the database. Names are stored normalized.
 @MainActor
@@ -85,11 +85,46 @@ public final class Store {
         }
     }
 
-    private func write(_ updates: (Database) throws -> Void) {
+    /// Records that `track` started playing, and returns the new row's ID.
+    func addPlay(_ track: Track, at date: Date) -> Int64? {
+        write { db in
+            try db.execute(
+                sql: "INSERT INTO play (playedAt, trackKey, name, artist, album) VALUES (?, ?, ?, ?, ?)",
+                arguments: [date, track.key, track.name, track.artist, track.album])
+            return db.lastInsertedRowID
+        }
+    }
+
+    /// Records that the app skipped the play with `id`, and the result of the dislike before the skip.
+    func recordSkip(play id: Int64?, dislike: Dislike) {
+        write {
+            try $0.execute(
+                sql: "UPDATE play SET action = 'skip', dislike = ? WHERE id = ?", arguments: [dislike.rawValue, id])
+        }
+    }
+
+    /// Records that the play with `id` got a notification.
+    func recordNotification(play id: Int64?) {
+        write { try $0.execute(sql: "UPDATE play SET notified = 1 WHERE id = ?", arguments: [id]) }
+    }
+
+    /// Returns how many plays of the song with `trackKey` got a notification since `date`.
+    func notificationCount(trackKey: String, since date: Date) -> Int {
+        let count = try? queue?.read {
+            try Int.fetchOne(
+                $0, sql: "SELECT count(*) FROM play WHERE trackKey = ? AND notified = 1 AND playedAt >= ?",
+                arguments: [trackKey, date])
+        }
+        return count ?? 0
+    }
+
+    @discardableResult
+    private func write<T>(_ updates: (Database) throws -> T) -> T? {
         do {
-            try queue?.write(updates)
+            return try queue?.write(updates)
         } catch {
             failure = error.localizedDescription
+            return nil
         }
     }
 
@@ -119,6 +154,24 @@ public final class Store {
                       verdict TEXT NOT NULL CHECK (verdict IN ('allow', 'skip')),
                       decidedAt TEXT NOT NULL
                     ) STRICT;
+                    """)
+        }
+        migrator.registerMigration("v2") { db in
+            try db.execute(
+                sql: """
+                    CREATE TABLE play (
+                      id INTEGER PRIMARY KEY,
+                      playedAt TEXT NOT NULL,
+                      trackKey TEXT NOT NULL,
+                      name TEXT NOT NULL,
+                      artist TEXT NOT NULL,
+                      album TEXT NOT NULL,
+                      action TEXT CHECK (action IN ('skip', 'pause', 'nothing')),
+                      dislike TEXT CHECK (dislike IN ('accepted', 'ignored', 'failed')),
+                      notified INTEGER NOT NULL DEFAULT 0 CHECK (notified IN (0, 1))
+                    ) STRICT;
+
+                    CREATE INDEX playOnTrackKeyAndPlayedAt ON play (trackKey, playedAt);
                     """)
         }
         return migrator
