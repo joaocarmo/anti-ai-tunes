@@ -2,7 +2,7 @@
 
 This file describes how Anti-AI Tunes is built and the rules the code must follow. It follows the ARCHITECTURE.md format: a short map of the code plus the rules that rarely change.[^1] Find code with symbol search. This file names types but does not link to them, because links go stale.
 
-Status: v0.3.1 in progress. Types marked *(planned)* do not exist yet. The rest is in the code. Update this file when an invariant or a boundary changes.
+Status: v0.4.0 in progress. Types marked *(planned)* do not exist yet. The rest is in the code. Update this file when an invariant or a boundary changes.
 
 ## Bird's-eye view
 
@@ -31,7 +31,7 @@ All logic lives here. It has no UI code.
 - `Verdict`: the parts that are on the list and not allowed by a decision.
 - `PlayerEvent` and `Track`: parse the `playerInfo` dictionary and the launch read. A message without `Name` is a state-only event. `Track.key` joins the normalised `Name`, `Artist` and `Album`, because streamed songs carry no persistent ID.
 - `NowPlaying`: applies events to the current state and reports when a different song starts, so repeats count once.
-- `MatchCoordinator`: the core flow. It owns `NowPlaying` and checks each song once, the first time it plays. On a match, it skips and notifies. It acts in the same main-actor turn as the matching `playerInfo`, so the key is still the latest (invariant 6). A delay before acting must compare the key again. It sends Apple Events only while `MusicControlling.isRunning` is true. **Not AI** allows every matched part. For the most recent skip, and only while the song after it plays, it also sends `previous track`, waits 1 second, and sends it once more if the skipped song is not back. The first call may only restart the current song. Later it also handles the delay before acting, the track-key check, the dislike attempt, history rows and the daily notification cap.
+- `MatchCoordinator`: the core flow. It owns `NowPlaying` and checks each song once, the first time it plays. It records 1 `play` row per song. On a match, it tries the dislike, skips and notifies. A song without an artist and without a match gets a notification that says so. A play gets at most 1 notification, and a song at most 3 on one local day, counted from its `play` rows. The calendar for the local day is passed in. It acts in the same main-actor turn as the matching `playerInfo`, so the key is still the latest (invariant 6). A delay before acting must compare the key again. It sends Apple Events only while `MusicControlling.isRunning` is true. **Not AI** allows every matched part. For the most recent skip, and only while the song after it plays, it also sends `previous track`, waits 1 second, and sends it once more if the skipped song is not back. The first call may only restart the current song. If the dislike stuck, it clears it when the skipped song plays again, because the call acts on the current song. Later it also handles the delay before acting and its track-key check.
 - `Skip`: the track key, matched parts and display names of a skip, and the notification payload that brings them back to **Not AI**, even after a relaunch.
 - `CSVNames`: parses a `csv` body (RFC 4180) and returns the normalised names in a named column. Drops blank names. The `lines` format comes with subscribed lists.
 - `TransformRunner` *(planned)*: runs an optional local command. The downloaded body goes in on stdin, and names come out on stdout.
@@ -40,7 +40,7 @@ All logic lives here. It has no UI code.
 - `Store`: the GRDB database (`db.sqlite`), its migrations and all queries. If the file cannot open, it saves nothing, and the menu says that changes are not saved.
 - `Archiver` *(planned)*: moves history rows beyond the newest N into the archive database.
 - `MenuState`: the view model. Views only render it.
-- Ports: `MusicControlling`, `Notifying`, `TimeSource` and `HTTPClient`. These protocols are the only way the package reaches the system. `HTTPBody.collect` enforces the response size cap for the `HTTPClient` adapter. `MusicControlling.dislikeCurrentTrack()` *(planned)* returns `.accepted`, `.ignored` or `.failed`, so a better dislike method later changes only the adapter.
+- Ports: `MusicControlling`, `Notifying`, `TimeSource` and `HTTPClient`. These protocols are the only way the package reaches the system. `HTTPBody.collect` enforces the response size cap for the `HTTPClient` adapter. `MusicControlling.dislikeCurrentTrack()` returns the read-back, or nil on failure, and `Dislike` maps it to `.accepted`, `.ignored` or `.failed`. A better dislike method later changes only the adapter.
 
 ### `App/` (SwiftPM executable target `AntiAITunes`)
 
@@ -55,7 +55,7 @@ Thin adapters and views. The folder is excluded from coverage as a whole. `Packa
 
 ### Data
 
-- `db.sqlite`: lists (`source`, `listedArtist`) and decisions (`decision`). History (`play`) and daily notification counts (`notificationCount`) arrive in v0.4.0.
+- `db.sqlite`: lists (`source`, `listedArtist`) and decisions (`decision`) and history (`play`). The daily notification cap counts `play` rows, so it has no table of its own.
 - `history-archive.sqlite` *(planned)*: older `play` rows, same schema.
 
 All files live in `~/Library/Application Support/AntiAITunes/`. Versions before 0.3.0 kept the default list in `default-list.json`. `Store` deletes that file.
@@ -99,7 +99,7 @@ MUST and MUST NOT have the meaning given in BCP 14 (RFC 2119 and RFC 8174).[^3][
 
 ### Errors
 
-Apple Event failures are best-effort. They are logged in the `play` row's `error` column, and the flow continues. For example, a failed dislike still skips. Refresh failures keep the previous rows and show the error on the source. Archive failures roll back and show the error in Settings.
+Apple Event failures are best-effort, and the flow continues. A failed dislike is recorded as `failed` in its `play` row and still skips. The other Apple Events report no error. Refresh failures keep the previous rows and show the error on the source. Archive failures roll back and show the error in Settings.
 
 ### Time
 
